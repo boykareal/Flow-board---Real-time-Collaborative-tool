@@ -3,7 +3,7 @@
 import "./app.css";
 import "@appwrite.io/pink-icons";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { client } from "@/lib/appwrite";
+import { client } from "@/lib/client/config";
 import { AppwriteException } from "appwrite";
 import NextjsLogo from "../static/nextjs-icon.svg";
 import AppwriteLogo from "../static/appwrite-icon.svg";

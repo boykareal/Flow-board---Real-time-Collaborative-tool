@@ -39,6 +39,22 @@ export const userAuthStore = create()(
                 }
             },
 
+            async createAccount(name, email, password){
+                try {
+                    if(name.length === 0 || email.length === 0 || password.length === 0 || !email.includes("@")){
+                        return new Error("your name or email or password is not valid") 
+                    }
+
+                    await account.create(ID.unique(),email, password, name)
+                    return {success:true}
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error instanceof AppwriteException ? error: null
+                    }
+                }
+            },
+
             
         }))
     )

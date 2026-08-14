@@ -50,12 +50,27 @@ export const userAuthStore = create()(
                 } catch (error) {
                     return {
                         success: false,
-                        error: error instanceof AppwriteException ? error: null
+                        error: error instanceof AppwriteException ? error: error
                     }
                 }
             },
 
-            
-        }))
+            async logout(){
+                try {
+                    await account.deleteSession()
+                    set({session: null, jwt: null, user:null})
+                } catch (error) {
+                    error: error instanceof AppwriteException ? error:error
+                }
+            },
+        })),
+        {
+            name: "auth",
+            onRehydrateStorage(){
+                return(state,error) => {
+                    if(!error) state?.setHydrated()
+                }
+            }
+        }
     )
 )

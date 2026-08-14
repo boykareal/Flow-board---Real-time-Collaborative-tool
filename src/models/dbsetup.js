@@ -1,10 +1,10 @@
-import { db } from "../models/name";
-import createBoardsCollection from "./boards.collection";
-import createCardsCollection from "./cards.collection";
-import createColumnsCollection from "./columns.collection";
-import createCommentsCollection from "./comments.collection";
-import { createMembersCollection } from "./members.collection";
-import { databases } from "@/lib/server";
+import { db } from "./name.js";
+import {createBoardsCollection} from "./boards.collection.js";
+import {createCardsCollection} from "./cards.collection.js";
+import {createColumnsCollection} from "./columns.collection.js";
+import {createCommentsCollection} from "./comments.collection.js";
+import { createMembersCollection } from "./members.collection.js";
+import { databases } from "../lib/server/config.js";
 
 export default async function getOrCreateDB() {
   try {
@@ -28,3 +28,5 @@ export default async function getOrCreateDB() {
     }
   }
 }
+
+getOrCreateDB()

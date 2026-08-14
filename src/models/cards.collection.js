@@ -1,5 +1,5 @@
-import { databases } from "@/lib/server/config";
-import { db,cardsId  } from "./name";
+import { databases } from "../lib/server/config.js";
+import { db,cardsId  } from "./name.js";
 
 const DATABASE_ID = db;
 const COLLECTION_ID = cardsId;
@@ -14,7 +14,7 @@ export async function createCardsCollection(){
 
         console.log("Cards collection created Succesfullly: ")
 
-        await databases.create.StringAttribute({
+        await databases.createStringAttribute({
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             key: "columnId",
@@ -73,6 +73,7 @@ export async function createCardsCollection(){
             collectionId: COLLECTION_ID,
             key: "labels",
             required: false,
+            size: 36,
             array: true
         })
 
@@ -81,6 +82,7 @@ export async function createCardsCollection(){
             collectionId:COLLECTION_ID,
             key: "attachementsid",
             required: false,
+            size: 36,
             array: true
         })
 
@@ -88,6 +90,7 @@ export async function createCardsCollection(){
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             key: "createdBy",
+            size: 36,
             required : true,
         })
     } catch (error) {

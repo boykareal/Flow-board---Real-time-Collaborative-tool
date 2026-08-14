@@ -1,6 +1,6 @@
 import { Permission } from "node-appwrite";
-import { storageId } from "./name";
-import { storage } from "@/lib/server/config"; 
+import { storageId } from "./name.js";
+import { storage } from "../lib/server/config.js"; 
 
 export default async function getOrCreateStorage() {
   try {

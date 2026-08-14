@@ -1,5 +1,5 @@
-import { databases } from "@/lib/server/config";
-import { db, columnsId  } from "./name";
+import { databases } from "../lib/server/config.js";
+import { db, columnsId  } from "./name.js";
 
 const DATABASE_ID = db;
 const COLLECTION_ID = columnsId;

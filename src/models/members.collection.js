@@ -1,5 +1,5 @@
-import { databases } from "@/lib/server/config";
-import { db, membersId } from "./name";
+import { databases } from "../lib/server/config.js";
+import { db, membersId } from "./name.js";
 
 const DATABASE_ID = db;
 const COLLECTION_ID = membersId;
@@ -34,6 +34,7 @@ export async function createMembersCollection() {
       databaseId: DATABASE_ID,
       collectionId: COLLECTION_ID,
       key: "role",
+      size: 36,
       required: true,
     });
 

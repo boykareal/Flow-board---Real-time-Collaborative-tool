@@ -1,5 +1,5 @@
-import { databases } from "@/lib/server/config";
-import { db,boardsId } from "./name";
+import { databases } from "../lib/server/config.js";
+import { db,boardsId } from "./name.js";
 
 const DATABASE_ID = db;
 const COLLECTION_ID = boardsId;
@@ -49,7 +49,7 @@ export async function createBoardsCollection(){
         });
 
         await databases.createStringAttribute({
-            databasesId: DATABASE_ID,
+            databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             key: "memberRoles",
             size: 20,
@@ -67,7 +67,7 @@ export async function createBoardsCollection(){
         
         console.log("All board attributes created!")
     } catch (error) {
-        console.error("something went wrong while creating collection or attribute", error);
+        console.error("something went wrong while creating boards collection or attribute", error);
     }
 }
 

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
-export default function boardsPage(){
+export default function dashboardPage(){
     const [boards, setboards] = useState([]);
     const { user, hydrated } = userAuthStore((state) => ({
        user: state.user,

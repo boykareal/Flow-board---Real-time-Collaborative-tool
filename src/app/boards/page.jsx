@@ -9,10 +9,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 export default function dashboardPage(){
     const [boards, setboards] = useState([]);
-    const { user, hydrated } = userAuthStore((state) => ({
-       user: state.user,
-       hydrated: state.hydrated,
-     }));
+    const user = userAuthStore((state) => state.user);
+    const hydrated = userAuthStore((state) => state.hydrated);
     const router = useRouter();
     useEffect(() => {
         const getBoards = async() => {

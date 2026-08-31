@@ -73,7 +73,7 @@ export async function createCardsCollection(){
             collectionId: COLLECTION_ID,
             key: "labels",
             required: false,
-            size: 36,
+            size: 500,
             array: true
         })
 

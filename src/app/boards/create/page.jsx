@@ -10,10 +10,8 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
 
 export default function createpage(){
     const router = useRouter();
-    const { user, hydrated } = userAuthStore((state) => ({
-      user: state.user,
-      hydrated: state.hydrated,
-    }));
+    const user = userAuthStore((state) => state.user);
+    const hydrated = userAuthStore((state) => state.hydrated);
     useEffect(() => {
         if(hydrated === true && !user){
             router.push("/login");

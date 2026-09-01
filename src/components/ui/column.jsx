@@ -1,3 +1,4 @@
+"use client"
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
@@ -10,8 +11,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import { useState } from "react";
 
-function Column({ title, cards, columnId, boardId, setCardsData }) {
+function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
+  const [isRenameOpen, setisRenameOpen] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -48,7 +51,34 @@ function Column({ title, cards, columnId, boardId, setCardsData }) {
   return (
     <div className="min-h-[300px] rounded-lg border p-4">
       <h2 className="mb-4 font-semibold">{title}</h2>
-      <button onClick={() => onRename(columnId)}>rename Column </button>
+      <button onClick={() => setisRenameOpen(true)}>Rename</button>
+
+      <Dialog open={isRenameOpen} onOpenChange={setisRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogHeader>Rename Column</DialogHeader>
+          </DialogHeader>
+          <form onSubmit={onrename}>
+            <div>
+              <label htmlFor="newtitle">newTitle</label>
+              <input
+                className="text-black"
+                id="newtitle"
+                name="newtitle"
+                placeholder="Enter New Title"
+                type="text"
+                required
+                minLength={5}
+              ></input>
+            </div>
+            <button type="submit">Rename column</button>
+            <button type="button" onClick={() => setisRenameOpen(false)}>
+              Cancel
+            </button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <button onClick={() => onDelete(columnId)}>delete Column </button>
 
       <div className="flex flex-col gap-3">

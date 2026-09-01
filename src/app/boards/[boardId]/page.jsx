@@ -27,6 +27,36 @@ export default function Boardpage(){
    const hydrated = userAuthStore((state) => state.hydrated);
     const boardId = params.boardId;
 
+    const handlerenameColumn = async(e) => {
+        try {
+            e.preventDefault();
+
+            const formdata = new FormData(e.currentTarget);
+            const newColumntitle = formdata.get("newtitle");
+
+            if(typeof newColumntitle !== "string" || newColumntitle.trim.length() < 3){
+                return;
+            }
+
+            const newtitle = newColumntitle.trim();
+            
+            await databases.updateDocument(
+                db,
+                columnsId,
+                columnId,
+                {
+                    title: newtitle
+                }
+            );
+            
+            setcolumns((prevcolumns) => prevcolumns.map((column) => column.$id === columnId ? {...column, title: newtitle}: column))
+            
+            setisRenameOpen(false);
+        } catch (error) {
+            console.error("could not rename Column", error);
+        }
+    }
+
     const handlesubmit = async(e) => {
         try {
             e.preventDefault();
@@ -104,7 +134,7 @@ export default function Boardpage(){
       <div>
         Board Detail Page
         <div>
-          <dialog>
+          <Dialog>
             <DialogTrigger>Add column</DialogTrigger>
 
             <DialogContent>
@@ -130,13 +160,9 @@ export default function Boardpage(){
                 </DialogFooter>
               </form>
             </DialogContent>
-          </dialog>
+          </Dialog>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <button>rename column</button>
-            <button>delete columns</button>
-          </div>
           {columns.map((column) => (
             <Column
               key={column.$id}
@@ -145,6 +171,7 @@ export default function Boardpage(){
               cards={cardscoll.filter((card) => card.columnId === column.$id)}
               boardId={boardId}
               setCardsData={setcardsdata}
+              onrename={handlerenameColumn}
             />
           ))}
         </div>

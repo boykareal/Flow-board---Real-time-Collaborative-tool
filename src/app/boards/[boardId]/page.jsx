@@ -17,6 +17,7 @@ import {Dialog,DialogClose,
   DialogTrigger} from '../../../components/ui/dialog'
 
 export default function Boardpage(){
+    const[isCreateColumnopen, setisCreateColumnopen] = useState(false);
     const [columns, setcolumns] = useState([]);
     const [boarddata,setboardata] = useState(null);
     const [cardscoll,setcardsdata] = useState([]);
@@ -64,6 +65,14 @@ export default function Boardpage(){
             const formData = new FormData(e.currentTarget);
 
             const ColumnTitle = formData.get("title")
+
+            if (typeof ColumnTitle !== "string" || ColumnTitle.trim.length() < 5
+            ) {
+                return;
+            }
+
+            ColumnTitle = ColumnTitle.trim();
+
 
             const cols = await databases.createDocument(
               db,
@@ -134,8 +143,13 @@ export default function Boardpage(){
       <div>
         Board Detail Page
         <div>
-          <Dialog>
-            <DialogTrigger>Add column</DialogTrigger>
+          <Dialog
+            open={isCreateColumnopen}
+            onOpenChange={setisCreateColumnopen}
+          >
+            <DialogTrigger asChild>
+              <button type="button">+ Add column</button>
+            </DialogTrigger>
 
             <DialogContent>
               <DialogHeader>
@@ -152,10 +166,12 @@ export default function Boardpage(){
                     placeholder="Title"
                     type="text"
                     required
+                    minLength={5}
                   ></input>
                 </div>
 
                 <DialogFooter>
+                    <button type="button" onClick={() => setisCreateColumnopen(false)}>Cancel</button>
                   <button type="submit">Create Column</button>
                 </DialogFooter>
               </form>

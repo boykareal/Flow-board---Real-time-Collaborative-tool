@@ -6,6 +6,7 @@ import { databases } from "@/lib/client/config";
 import { boardsId, columnsId, db , cardsId} from "@/models/name";
 import Column from "@/components/ui/column";
 import { useState, useEffect } from "react";
+import {toast} from "../../../components/ui/sonner"
 import {Dialog,DialogClose,
   DialogContent,
   DialogDescription,
@@ -88,6 +89,29 @@ export default function Boardpage(){
             setcolumns((prev)=> [...prev,cols]);
         } catch (error) {
             console.error("Could not create Column:", error)
+        }
+    }
+
+    async function onDeleteColumn(columnId){
+        try {
+            const cardsinColumns = cardscoll.filter(
+                (card) => card.columnId === columnId
+            )
+
+            if(cardsinColumns.length > 0){
+                toast.error("Move or delete all cards before deleting this column")
+                return;
+            } 
+
+            await databases.deleteDocument(
+                db,
+                columnsId,
+                columnId
+            );
+
+            setcolumns((prevcolumns) => prevcolumns.filter((column) => column.$id !== columnId));
+        } catch (error) {
+            console.error("Could not delete column: ", error)
         }
     }
    
@@ -188,6 +212,7 @@ export default function Boardpage(){
               boardId={boardId}
               setCardsData={setcardsdata}
               onrename={handlerenameColumn}
+              onDelete={onDeleteColumn}
             />
           ))}
         </div>

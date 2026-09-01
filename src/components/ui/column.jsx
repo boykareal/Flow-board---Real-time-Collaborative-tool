@@ -2,6 +2,7 @@
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
+import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { useState } from "react";
+import { AlertDialog } from "@base-ui/react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [isRenameOpen, setisRenameOpen] = useState(false);
@@ -81,6 +83,29 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog>
+        <AlertDialogTrigger>
+          <button type="button">Delete Column</button>
+        </AlertDialogTrigger>
+
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              this will permanently delete this column
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={onDelete(columnId)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <button onClick={() => onDelete(columnId)}>delete Column </button>
 

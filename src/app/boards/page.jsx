@@ -14,7 +14,6 @@ export default function dashboardPage(){
     const router = useRouter();
     useEffect(() => {
         const getBoards = async() => {
-            
             if (hydrated === true && !user) {
                 router.push("/login");
                 return;

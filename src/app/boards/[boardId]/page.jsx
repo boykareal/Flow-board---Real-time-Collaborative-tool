@@ -147,8 +147,8 @@ export default function Boardpage(){
             open={isCreateColumnopen}
             onOpenChange={setisCreateColumnopen}
           >
-            <DialogTrigger asChild>
-              <button type="button">+ Add column</button>
+            <DialogTrigger>
+                + Add Column
             </DialogTrigger>
 
             <DialogContent>

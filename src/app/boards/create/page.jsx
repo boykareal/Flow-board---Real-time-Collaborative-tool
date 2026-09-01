@@ -28,7 +28,7 @@ export default function createpage(){
         const description = formdata.get("description");
         const color = formdata.get("color");
 
-        if(typeof title !== string || title.length < 6){
+        if(typeof title !== string || title.length < 5){
             return;
         }
 

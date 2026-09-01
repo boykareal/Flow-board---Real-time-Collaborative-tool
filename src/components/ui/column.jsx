@@ -13,8 +13,9 @@ import {
 } from "../ui/dialog";
 import { useState } from "react";
 
-function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
+function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [isRenameOpen, setisRenameOpen] = useState(false);
+  const [isAddcardOpen, setisAddcardOpen] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -35,12 +36,14 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
         dueDate: dueDate || "",
         boardId,
         columnId,
-        order: columnsdata.total,
+        order: cards.length,
         labels: [],
         assigneeId: "",
       });
 
       setCardsData((prevCards) => [...prevCards, card]);
+
+      setisAddcardOpen(false);
 
       e.currentTarget.reset();
     } catch (error) {
@@ -56,7 +59,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
       <Dialog open={isRenameOpen} onOpenChange={setisRenameOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogHeader>Rename Column</DialogHeader>
+            <DialogTitle>Rename Column</DialogTitle>
           </DialogHeader>
           <form onSubmit={onrename}>
             <div>
@@ -87,7 +90,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
         ))}
       </div>
 
-      <Dialog>
+      <Dialog open={isAddcardOpen} onOpenChange={setisAddcardOpen}>
         <DialogTrigger>+ Add Card</DialogTrigger>
 
         <DialogContent>
@@ -130,6 +133,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename }) {
             </div>
 
             <DialogFooter>
+              <button type="button" onClick={() => setisAddcardOpen(false)}>Cancel</button>
               <button type="submit">Create Card</button>
             </DialogFooter>
           </form>

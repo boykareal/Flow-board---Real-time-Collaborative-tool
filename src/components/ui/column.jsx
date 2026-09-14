@@ -14,12 +14,14 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { useState } from "react";
-import { AlertDialog } from "@base-ui/react";
+import { AlertDialog, DialogClose } from "@base-ui/react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [selectedcard, setselectedcard] = useState(null);
+  const [Editing, isEditing] = useState(false);
   const [isRenameOpen, setisRenameOpen] = useState(false);
   const [isAddcardOpen, setisAddcardOpen] = useState(false);
+  const [draftCard, setDraftCard] = useState(null);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -52,6 +54,18 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
       e.currentTarget.reset();
     } catch (error) {
       console.error("Could not create card:", error);
+    }
+
+    function handleEdit(){
+      if(!selectedcard) return;
+
+      setDraftCard({
+        ...selectedcard,
+        labels: [...selectedcard.labels],
+        assignees: [...selectedcard.assignees],
+      })
+
+      isEditing(true);
     }
   };
 
@@ -130,6 +144,8 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
         open={selectedcard !== null}
         onOpenChange={(open) => {
           if (!open) setselectedcard(null);
+          setDraftCard(null);
+          isEditing(false);
         }}
       >
         <DialogContent>
@@ -137,29 +153,85 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
             <DialogHeader>{selectedcard?.title}</DialogHeader>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium">Description</h4>
-              <p className="text-muted-foreground text-sm">
-                {selectedcard?.description || "No description"}
-              </p>
-            </div>
+          {Editing ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={draftCard.title}
+                  onChange={(e) =>
+                    setDraftCard({
+                      ...draftCard,
+                      title: e.target.value,
+                    })
+                  }
+                />
+              </div>
 
-            <div>
-              <h4 className="font-medium">Labels</h4>
-              <p>{selectedcard?.labeld?.join(", ") || "No labels"}</p>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={draftCard.description}
+                  onChange={(e) =>
+                    setDraftCard({
+                      ...draftCard,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => {
+                  isEditing(false); 
+                  setDraftCard(null)
+                  }}
+                  >
+                    Cancel
+                  </Button>
 
-            <div>
-              <h4 className="font-medium">Assignees</h4>
-              <p>{selectedCard?.assignees?.join(", ") || "No assignees"}</p>
+                <Button type="button" onClick={handleSave}>
+                  Save
+                </Button>
+              </DialogFooter>
             </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium">Description</h4>
+                <p className="text-muted-foreground text-sm">
+                  {selectedcard?.description || "No description"}
+                </p>
+              </div>
 
-            <div>
-              <h4 className="font-medium">Due date</h4>
-              <p>{selectedCard?.dueDate || "No due date"}</p>
+              <div>
+                <h4 className="font-medium">Labels</h4>
+                <p>{selectedcard?.labeld?.join(", ") || "No labels"}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium">Assignees</h4>
+                <p>{selectedCard?.assignees?.join(", ") || "No assignees"}</p>
+              </div>
+
+              <div>
+                <h4 className="font-medium">Due date</h4>
+                <p>{selectedCard?.dueDate || "No due date"}</p>
+              </div>
+              <DialogFooter>
+                <button type="button" onClick={handleEdit}>
+                  Edit
+                </button>
+
+                <DialogClose asChild>
+                  <button type="button" variant="outline">Close</button>
+                </DialogClose>
+
+              </DialogFooter>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 

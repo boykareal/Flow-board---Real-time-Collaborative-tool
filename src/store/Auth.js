@@ -32,8 +32,7 @@ export const userAuthStore = create()(
 
                     return {success: true}
                 } catch (error) {
-                    return{
-                        success: false,
+                    return {success: false,
                         error: error instanceof AppwriteException ? error: error
                     }
                 }
@@ -57,10 +56,14 @@ export const userAuthStore = create()(
 
             async logout(){
                 try {
-                    await account.deleteSession()
+                    await account.deleteSession("current")
                     set({session: null, jwt: null, user:null})
                 } catch (error) {
-                    error: error instanceof AppwriteException ? error:error
+                    console.error(error);
+                    return {
+                        success:false,
+                        error: error instanceof AppwriteException ? error : new Error("Something went wrong while logging out user")
+                    }
                 }
             },
         })),

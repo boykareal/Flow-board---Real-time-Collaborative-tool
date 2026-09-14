@@ -2,6 +2,7 @@
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
+import {databaseId} from "../../models/name"
 import {Card, CardContent} from "@/components/ui/card"
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
@@ -66,6 +67,42 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
       })
 
       isEditing(true);
+    }
+
+    async function handleSave(){
+       if (!draftCard) return;
+
+       if (!draftCard.title.trim()) {
+         alert("Title is required");
+         return;
+       }
+
+       try {
+         const updatedCard = await databases.updateDocument(
+           databaseId,
+           cardsCollectionId,
+           draftCard.$id,
+           {
+             title: draftCard.title,
+             description: draftCard.description,
+             labels: draftCard.labels,
+             assignees: draftCard.assignees,
+             dueDate: draftCard.dueDate,
+           },
+         );
+
+         setCards((previousCards) =>
+           previousCards.map((card) =>
+             card.$id === updatedCard.$id ? updatedCard : card,
+           ),
+         );
+
+         setselectedcard(updatedCard);
+         setDraftCard(updatedCard);
+         isEditing(false);
+       } catch (error) {
+         console.error("Failed to update card:", error);
+       }
     }
   };
 

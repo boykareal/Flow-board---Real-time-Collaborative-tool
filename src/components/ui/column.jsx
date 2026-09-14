@@ -2,6 +2,7 @@
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
+import {Card, CardContent} from "@/components/ui/card"
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
 import {
@@ -16,6 +17,7 @@ import { useState } from "react";
 import { AlertDialog } from "@base-ui/react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
+  const [selectedcard, setselectedcard] = useState(null);
   const [isRenameOpen, setisRenameOpen] = useState(false);
   const [isAddcardOpen, setisAddcardOpen] = useState(false);
   const handleSubmit = async (e) => {
@@ -91,9 +93,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
 
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
 
             <AlertDialogDescription>
               this will permanently delete this column
@@ -111,9 +111,57 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
 
       <div className="flex flex-col gap-3">
         {cards.map((card) => (
-          <div key={card.$id}>{card.title}</div>
+          <Card
+            key={card.$id}
+            size="sm"
+            className={
+              "hover:bg-muted cursor-pointer flex-row items-center px-3 py-2"
+            }
+            onClick={() => setselectedcard(card)}
+          >
+            <CardContent className={"min-w-0 flex-1 px-0"}>
+              <p className="truncate font-medium">{card.title}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
+
+      <Dialog
+        open={selectedcard !== null}
+        onOpenChange={(open) => {
+          if (!open) setselectedcard(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogHeader>{selectedcard?.title}</DialogHeader>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium">Description</h4>
+              <p className="text-muted-foreground text-sm">
+                {selectedcard?.description || "No description"}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-medium">Labels</h4>
+              <p>{selectedcard?.labeld?.join(", ") || "No labels"}</p>
+            </div>
+
+            <div>
+              <h4 className="font-medium">Assignees</h4>
+              <p>{selectedCard?.assignees?.join(", ") || "No assignees"}</p>
+            </div>
+
+            <div>
+              <h4 className="font-medium">Due date</h4>
+              <p>{selectedCard?.dueDate || "No due date"}</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isAddcardOpen} onOpenChange={setisAddcardOpen}>
         <DialogTrigger>+ Add Card</DialogTrigger>
@@ -158,7 +206,9 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
             </div>
 
             <DialogFooter>
-              <button type="button" onClick={() => setisAddcardOpen(false)}>Cancel</button>
+              <button type="button" onClick={() => setisAddcardOpen(false)}>
+                Cancel
+              </button>
               <button type="submit">Create Card</button>
             </DialogFooter>
           </form>

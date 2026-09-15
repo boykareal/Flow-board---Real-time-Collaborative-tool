@@ -1,3 +1,4 @@
+import "./app.css"
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {

@@ -29,12 +29,11 @@ export const userAuthStore = create()(
                     ])
 
                     set({session, user, jwt})
-
+                    
                     return {success: true}
                 } catch (error) {
-                    return {success: false,
-                        error: error instanceof AppwriteException ? error: error
-                    }
+                    console.log(error);
+                    throw error;
                 }
             },
 

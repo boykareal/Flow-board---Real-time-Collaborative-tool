@@ -6,6 +6,7 @@ import { Query } from "appwrite";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default function dashboardPage(){
@@ -69,16 +70,27 @@ export default function dashboardPage(){
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {boards.map((board) => (
-              <Card key={board.$id}>
-                <CardHeader>
-                  <CardTitle>{board.title}</CardTitle>
-                  <CardDescription>{board.description}</CardDescription>
-                </CardHeader>
+              <Link
+                key={board.$id}
+                href={`/boards/${board.$id}`}
+                className="block"
+              >
+                <Card className="h-full cursor-pointer border-slate-700 bg-slate-900 text-white transition hover:border-blue-500 hover:shadow-lg">
+                  <CardHeader>
+                    <CardTitle>{board.title}</CardTitle>
 
-                <CardContent>
-                  <p>{board.members?.length ?? 0} members</p>
-                </CardContent>
-              </Card>
+                    <CardDescription className="text-slate-400">
+                      {board.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-slate-400">
+                      {board.members?.length ?? 0} members
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

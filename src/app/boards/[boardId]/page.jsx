@@ -139,6 +139,7 @@ export default function Boardpage(){
                     return;
                 }
                 
+                console.log("BOARD SUCCESS:", board);
                 setboardata(board);
                 
                 const columnsdata = await databases.listDocuments(
@@ -149,7 +150,8 @@ export default function Boardpage(){
                     Query.orderAsc("order")
                    ]
                 );
-                
+
+                console.log("COLUMNS SUCCESS:", columnsdata);
                 setcolumns(columnsdata.documents);
                 
                 

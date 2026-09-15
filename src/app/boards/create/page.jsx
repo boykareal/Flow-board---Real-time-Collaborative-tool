@@ -1,7 +1,7 @@
 "use client"
 import { databases } from "@/lib/client/config"
 import { userAuthStore } from "@/store/Auth"
-import { ID } from "appwrite"
+import { ID, Permission, Role } from "appwrite"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { db, boardsId } from "@/models/name"
@@ -50,29 +50,28 @@ export default function createpage(){
         const description = formData.get("description");
         const color = formData.get("color");
 
-         console.log({
-           title: formData.get("title"),
-           description: formData.get("description"),
-           color: formData.get("color"),
-         });
-
         if(typeof title !== "string" || title.trim().length < 6){
             return;
         }
 
         const board = await databases.createDocument(
-            db,
-            boardsId,
-            ID.unique(),
-            {
-                title,
-                description,
-                color,
-                ownerId: user.$id,
-                members: [user.$id],
-                memberRoles: ["owner"]
-            }
-        )
+          db,
+          boardsId,
+          ID.unique(),
+          {
+            title,
+            description,
+            color,
+            ownerId: user.$id,
+            members: [user.$id],
+            memberRoles: ["owner"],
+          },
+          [
+            Permission.read(Role.user(user.$id)),
+            Permission.update(Role.user(user.$id)),
+            Permission.delete(Role.user(user.$id)),
+          ],
+        );
 
         router.push(`/boards/${board.$id}`);
     }

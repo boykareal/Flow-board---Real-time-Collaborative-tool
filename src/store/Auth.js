@@ -7,14 +7,33 @@ import { account } from "@/lib/client/config";
 
 export const userAuthStore = create()(
     persist(
-        immer((set) => ({
+        immer((set, get) => ({
             session: null,
             jwt: null,
             user: null,
             hydrated: false,
+            authChecked: false,
+            authChecking: false,
 
             setHydrated(){
                 set({hydrated: true})
+            },
+
+            async checkSession(){
+                if(get().authChecked || get().authChecking){
+                    return;
+                }
+
+                set({authChecking: true});
+
+                try {
+                    const user = await account.get();
+                    set({user});
+                } catch {
+                    set({session: null, jwt: null, user: null});
+                } finally {
+                    set({authChecked: true, authChecking: false});
+                }
             },
 
             async login(email, password){
@@ -28,7 +47,7 @@ export const userAuthStore = create()(
                         account.createJWT()
                     ])
 
-                    set({session, user, jwt})
+                    set({session, user, jwt, authChecked: true, authChecking: false})
                     
                     return {success: true}
                 } catch (error) {
@@ -54,7 +73,7 @@ export const userAuthStore = create()(
             async logout(){
                 try {
                     await account.deleteSession("current")
-                    set({session: null, jwt: null, user:null})
+                    set({session: null, jwt: null, user:null, authChecked: true, authChecking: false})
                 } catch (error) {
                     console.error(error);
                     return {
@@ -66,9 +85,10 @@ export const userAuthStore = create()(
         })),
         {
             name: "auth",
+            partialize: () => ({}),
             onRehydrateStorage(){
                 return(state,error) => {
-                    if(!error) state?.setHydrated()
+                    state?.setHydrated()
                 }
             }
         }

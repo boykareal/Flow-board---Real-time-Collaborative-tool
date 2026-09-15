@@ -23,15 +23,24 @@ export default function createpage(){
     const router = useRouter();
     const user = userAuthStore((state) => state.user);
     const hydrated = userAuthStore((state) => state.hydrated);
+    const authChecked = userAuthStore((state) => state.authChecked);
     useEffect(() => {
-        if(hydrated === true && !user){
+        if(!hydrated || !authChecked){
+            return;
+        }
+
+        if(!user){
             router.push("/login");
             return;
         }
-    },[user,hydrated,router])
+    },[user,hydrated,authChecked,router])
 
     async function handlesubmit(e){
         e.preventDefault();
+
+        if(!authChecked || !user){
+            return;
+        }
 
         console.log("Create board submitted");
 
@@ -66,6 +75,10 @@ export default function createpage(){
         )
 
         router.push(`/boards/${board.$id}`);
+    }
+
+    if (!hydrated || !authChecked || !user) {
+        return null;
     }
 
     return (

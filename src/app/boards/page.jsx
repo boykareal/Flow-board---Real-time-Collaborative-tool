@@ -12,10 +12,15 @@ export default function dashboardPage(){
     const [boards, setboards] = useState([]);
     const user = userAuthStore((state) => state.user);
     const hydrated = userAuthStore((state) => state.hydrated);
+    const authChecked = userAuthStore((state) => state.authChecked);
     const router = useRouter();
     useEffect(() => {
         const getBoards = async() => {
-            if (hydrated === true && !user) {
+            if (!hydrated || !authChecked) {
+                return;
+            }
+
+            if (!user) {
                 router.push("/login");
                 return;
             }
@@ -29,7 +34,11 @@ export default function dashboardPage(){
         };
 
         getBoards()
-    },[user,hydrated]);
+    },[user,hydrated,authChecked,router]);
+
+    if (!hydrated || !authChecked || !user) {
+        return null;
+    }
 
     return (
       <div className="min-h-screen bg-slate-950 p-8">

@@ -27,7 +27,8 @@ export default function Boardpage(){
     
    const user = userAuthStore((state) => state.user);
    const hydrated = userAuthStore((state) => state.hydrated);
-    const boardId = params.boardId;
+   const authChecked = userAuthStore((state) => state.authChecked);
+   const boardId = params.boardId;
 
     const handlerenameColumn = async(e) => {
         try {
@@ -117,7 +118,7 @@ export default function Boardpage(){
    
     useEffect(() => {
         const fetchBoarddata = async () => {
-            if(!hydrated){
+            if(!hydrated || !authChecked){
                 return;
             }
 
@@ -162,7 +163,12 @@ export default function Boardpage(){
             }
         }
         fetchBoarddata();
-    },[hydrated, user, boardId, router]);
+    },[hydrated, authChecked, user, boardId, router]);
+
+    if (!hydrated || !authChecked || !user) {
+        return null;
+    }
+
     return (
       <div>
         Board Detail Page

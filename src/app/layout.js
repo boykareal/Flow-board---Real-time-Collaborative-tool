@@ -1,5 +1,6 @@
 import "./app.css"
 import { Toaster } from "@/components/ui/sonner";
+import AuthBootstrap from "@/components/AuthBootstrap";
 
 export const metadata = {
   title: "Appwrite + Next.js",
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" type="image/svg+xml" href="/appwrite.svg" />
       </head>
       <body className={"bg-[#FAFAFB] font-[Inter] text-sm text-[#56565C]"}>
+        <AuthBootstrap />
         {children}
         <Toaster />
       </body>

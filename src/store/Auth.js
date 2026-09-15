@@ -46,10 +46,8 @@ export const userAuthStore = create()(
                     await account.create(ID.unique(),email, password, name)
                     return {success:true}
                 } catch (error) {
-                    return {
-                        success: false,
-                        error: error instanceof AppwriteException ? error: error
-                    }
+                    console.log(error);
+                    throw error;
                 }
             },
 

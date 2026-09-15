@@ -2,7 +2,6 @@
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
-import {databaseId} from "../../models/name"
 import {Card, CardContent} from "@/components/ui/card"
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
@@ -79,7 +78,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
 
        try {
          const updatedCard = await databases.updateDocument(
-           databaseId,
+           db,
            cardsCollectionId,
            draftCard.$id,
            {

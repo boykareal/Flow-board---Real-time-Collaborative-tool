@@ -5,7 +5,18 @@ import { ID } from "appwrite"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { db, boardsId } from "@/models/name"
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 
 export default function createpage(){
@@ -19,16 +30,24 @@ export default function createpage(){
         }
     },[user,hydrated,router])
 
-    const handlesubmit = async(e) => {
+    async function handlesubmit(e){
         e.preventDefault();
 
-        const formdata = new FormData(e.currentTarget);
+        console.log("Create board submitted");
 
-        const title = formdata.get("title");
-        const description = formdata.get("description");
-        const color = formdata.get("color");
+        const formData = new FormData(e.currentTarget);
 
-        if(typeof title !== string || title.length < 5){
+        const title = formData.get("title");
+        const description = formData.get("description");
+        const color = formData.get("color");
+
+         console.log({
+           title: formData.get("title"),
+           description: formData.get("description"),
+           color: formData.get("color"),
+         });
+
+        if(typeof title !== "string" || title.trim().length < 6){
             return;
         }
 
@@ -50,51 +69,68 @@ export default function createpage(){
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-md">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+        <Card className="w-full max-w-md border border-slate-700 bg-slate-900 text-white shadow-2xl">
           <CardHeader>
-            <CardTitle>Create board</CardTitle>
+            <CardTitle className="text-white">Create board</CardTitle>
+
+            <CardDescription className="text-slate-400">
+              Create a board to organize your work.
+            </CardDescription>
           </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handlesubmit} className="flex flex-col gap-4">
-              <div>
-                <label htmlFor="title">title</label>
-                <input
-                  className="text-black"
+          <form onSubmit={handlesubmit}>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-slate-200">
+                  Title
+                </Label>
+
+                <Input
                   id="title"
                   name="title"
-                  placeholder="title"
-                  type="text"
-                  required
+                  placeholder="Enter board title"
+                  className="border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
                 />
               </div>
 
-              <div>
-                <label htmlFor="description">description</label>
-                <input
-                  className="text-black"
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-slate-200">
+                  Description
+                </Label>
+
+                <Textarea
                   id="description"
                   name="description"
-                  placeholder="description(optional)"
-                  type="text"
+                  placeholder="Enter board description (optional)"
+                  className="border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
                 />
               </div>
 
-              <div>
-                <label htmlFor="color">color</label>
-                <input
-                  className="text-black"
+              <div className="flex items-center justify-between">
+                <Label htmlFor="color" className="text-slate-200">
+                  Board color
+                </Label>
+
+                <Input
                   id="color"
                   name="color"
                   type="color"
-                  required
+                  defaultValue="#3b82f6"
+                  className="h-10 w-16 cursor-pointer border-slate-700 bg-slate-800 p-1"
                 />
               </div>
+            </CardContent>
 
-              <button type="submit">Create Board</button>
-            </form>
-          </CardContent>
+            <CardFooter className="mt-2 border-0 bg-transparent px-4 pb-4">
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Create Board
+              </Button>
+            </CardFooter>
+          </form>
         </Card>
       </div>
     );

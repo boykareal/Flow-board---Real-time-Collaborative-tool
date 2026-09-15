@@ -20,7 +20,6 @@ export default function AuthPage(){
 
         try {
             await login(email, password);
-            console.log("Login successful")
             router.push("/boards");
         } catch (error) {
             setErrorMessage("Invalid email or password.");

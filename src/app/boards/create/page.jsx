@@ -42,8 +42,6 @@ export default function createpage(){
             return;
         }
 
-        console.log("Create board submitted");
-
         const formData = new FormData(e.currentTarget);
 
         const title = formData.get("title");

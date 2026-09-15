@@ -13,9 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "../ui/dialog";
 import { useState } from "react";
-import { AlertDialog, DialogClose } from "@base-ui/react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [selectedcard, setselectedcard] = useState(null);

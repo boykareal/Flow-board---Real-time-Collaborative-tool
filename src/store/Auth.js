@@ -28,7 +28,8 @@ export const userAuthStore = create()(
 
                 try {
                     const user = await account.get();
-                    set({user});
+                    const { jwt } = await account.createJWT();
+                    set({user,jwt});
                 } catch {
                     set({session: null, jwt: null, user: null});
                 } finally {

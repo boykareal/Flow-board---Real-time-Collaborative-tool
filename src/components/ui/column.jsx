@@ -1,4 +1,8 @@
 "use client"
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
@@ -18,92 +22,106 @@ import { useState } from "react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [selectedcard, setselectedcard] = useState(null);
-  const [Editing, isEditing] = useState(false);
-  const [isRenameOpen, setisRenameOpen] = useState(false);
-  const [isAddcardOpen, setisAddcardOpen] = useState(false);
-  const [draftCard, setDraftCard] = useState(null);
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const [Editing, setEditing] = useState(false);
+const [isRenameOpen, setisRenameOpen] = useState(false);
+const [isAddcardOpen, setisAddcardOpen] = useState(false);
+const [draftCard, setDraftCard] = useState(null);
 
-    const formData = new FormData(e.currentTarget);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const cardTitle = formData.get("title");
-    const description = formData.get("description");
-    const dueDate = formData.get("dueDate");
+  // Capture the form before awaiting anything.
+  const form = e.currentTarget;
+  const formData = new FormData(form);
 
-    if (typeof cardTitle !== "string" || cardTitle.length < 6) {
-      return;
-    }
+  const cardTitle = formData.get("title");
+  const description = formData.get("description");
+  const dueDate = formData.get("dueDate");
 
-    try {
-      const card = await databases.createDocument(db, cardsId, ID.unique(), {
-        title: cardTitle,
-        description: description || "",
-        dueDate: dueDate || "",
+  if (
+    typeof cardTitle !== "string" ||
+    cardTitle.trim().length < 6
+  ) {
+    return;
+  }
+
+  try {
+    const order = cards.length === 0 ? 0 : Math.max(...cards.map((card) => card.order)) + 1;
+
+    const card = await databases.createDocument(
+      db,
+      cardsId,
+      ID.unique(),
+      {
+        title: cardTitle.trim(),
+        description:
+          typeof description === "string" ? description : "",
+        dueDate: typeof dueDate === "string" ? dueDate : "",
         boardId,
         columnId,
-        order: cards.length,
+        order: order,
         labels: [],
         assigneeId: "",
-      });
+      }
+    );
 
-      setCardsData((prevCards) => [...prevCards, card]);
+    setCardsData((prevCards) => [...prevCards, card]);
 
-      setisAddcardOpen(false);
+    form.reset();
+    setisAddcardOpen(false);
+  } catch (error) {
+    console.error("Could not create card:", error);
+  }
+}; // handleSubmit ends here.
 
-      e.currentTarget.reset();
-    } catch (error) {
-      console.error("Could not create card:", error);
-    }
+function handleEdit() {
+  if (!selectedcard) return;
 
-    function handleEdit(){
-      if(!selectedcard) return;
+  setDraftCard({
+    ...selectedcard,
+    labels: [...(selectedcard.labels ?? [])],
+  });
 
-      setDraftCard({
-        ...selectedcard,
-        labels: [...selectedcard.labels],
-        assignees: [...selectedcard.assignees],
-      })
+  setEditing(true);
+}
 
-      isEditing(true);
-    }
+async function handleSave() {
+  if (!draftCard) return;
 
-    async function handleSave(){
-       if (!draftCard) return;
+  const title = draftCard.title.trim();
 
-       if (!draftCard.title.trim()) {
-         alert("Title is required");
-         return;
-       }
+  if (title.length < 6) {
+    alert("Title must contain at least 6 characters");
+    return;
+  }
 
-       try {
-         const updatedCard = await databases.updateDocument(
-           db,
-           cardsCollectionId,
-           draftCard.$id,
-           {
-             title: draftCard.title,
-             description: draftCard.description,
-             labels: draftCard.labels,
-             assignees: draftCard.assignees,
-             dueDate: draftCard.dueDate,
-           },
-         );
+  try {
+    const updatedCard = await databases.updateDocument(
+      db,
+      cardsId,
+      draftCard.$id,
+      {
+        title,
+        description: draftCard.description,
+        labels: draftCard.labels,
+        assigneeId: draftCard.assigneeId,
+        dueDate: draftCard.dueDate,
+      }
+    );
 
-         setCards((previousCards) =>
-           previousCards.map((card) =>
-             card.$id === updatedCard.$id ? updatedCard : card,
-           ),
-         );
+    setCardsData((previousCards) =>
+      previousCards.map((card) =>
+        card.$id === updatedCard.$id ? updatedCard : card
+      )
+    );
 
-         setselectedcard(updatedCard);
-         setDraftCard(updatedCard);
-         isEditing(false);
-       } catch (error) {
-         console.error("Failed to update card:", error);
-       }
-    }
-  };
+    setselectedcard(updatedCard);
+    setDraftCard(updatedCard);
+    setEditing(false);
+  } catch (error) {
+    console.error("Failed to update card:", error);
+  }
+};
 
   return (
     <div className="min-h-[300px] rounded-lg border p-4">
@@ -138,7 +156,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
 
       <AlertDialog>
         <AlertDialogTrigger>
-          <button type="button">Delete Column</button>
+          Delete Column
         </AlertDialogTrigger>
 
         <AlertDialogContent>
@@ -179,14 +197,16 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
       <Dialog
         open={selectedcard !== null}
         onOpenChange={(open) => {
-          if (!open) setselectedcard(null);
-          setDraftCard(null);
-          isEditing(false);
+          if (!open) {
+            setselectedcard(null);
+            setDraftCard(null);
+            setEditing(false);
+          }
         }}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogHeader>{selectedcard?.title}</DialogHeader>
+            <DialogTitle>{selectedcard?.title}</DialogTitle>
           </DialogHeader>
 
           {Editing ? (
@@ -218,15 +238,18 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
                   }
                 />
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => {
-                  isEditing(false); 
-                  setDraftCard(null)
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditing(false);
+                    setDraftCard(null);
                   }}
-                  >
-                    Cancel
-                  </Button>
+                >
+                  Cancel
+                </Button>
 
                 <Button type="button" onClick={handleSave}>
                   Save
@@ -244,17 +267,17 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
 
               <div>
                 <h4 className="font-medium">Labels</h4>
-                <p>{selectedcard?.labeld?.join(", ") || "No labels"}</p>
+                <p>{selectedcard?.labels?.join(", ") || "No labels"}</p>
               </div>
 
               <div>
                 <h4 className="font-medium">Assignees</h4>
-                <p>{selectedCard?.assignees?.join(", ") || "No assignees"}</p>
+                <p>{selectedcard?.assigneeId?.join(", ") || "No assignees"}</p>
               </div>
 
               <div>
                 <h4 className="font-medium">Due date</h4>
-                <p>{selectedCard?.dueDate || "No due date"}</p>
+                <p>{selectedcard?.dueDate || "No due date"}</p>
               </div>
               <DialogFooter>
                 <button type="button" onClick={handleEdit}>
@@ -262,9 +285,10 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
                 </button>
 
                 <DialogClose asChild>
-                  <button type="button" variant="outline">Close</button>
+                  <button type="button" variant="outline">
+                    Close
+                  </button>
                 </DialogClose>
-
               </DialogFooter>
             </div>
           )}

@@ -2,11 +2,12 @@
 import { useParams, useRouter } from "next/navigation"
 import { userAuthStore } from "@/store/Auth";
 import { Account, ID, Query } from "appwrite";
-import { account, databases } from "@/lib/client/config";
+import { databases } from "@/lib/client/config";
+import { withFreshJWT } from "@/lib/client/auth-request";
 import { boardsId, columnsId, db , cardsId} from "@/models/name";
 import Column from "@/components/ui/column";
 import { useState, useEffect } from "react";
-import {toast} from "../../../components/ui/sonner"
+import {toast} from "sonner"
 import {Dialog,DialogClose,
   DialogContent,
   DialogDescription,
@@ -16,7 +17,7 @@ import {Dialog,DialogClose,
   DialogPortal,
   DialogTitle,
   DialogTrigger} from '../../../components/ui/dialog'
-  import axios from "axios";
+import axios from "axios";
   
 
 export default function Boardpage(){
@@ -26,7 +27,6 @@ export default function Boardpage(){
     const [cardscoll,setcardsdata] = useState([]);
     const router = useRouter();
     const params = useParams();
-    const jwt = userAuthStore((state) => state.jwt);
     const user = userAuthStore((state) => state.user);
     const hydrated = userAuthStore((state) => state.hydrated);
     const authChecked = userAuthStore((state) => state.authChecked);
@@ -69,15 +69,7 @@ export default function Boardpage(){
             e.preventDefault();
             seterror(null);
 
-            let token = jwt;
-            if(!token){
-                const result = await account.createJWT();
-                token = result.jwt
-                userAuthStore.setState({jwt: token})
-            }
-
             const formData = new FormData(e.currentTarget);
-            
             const ColumnTitle = formData.get("title")
 
             if (typeof ColumnTitle !== "string" || ColumnTitle.trim().length < 5
@@ -88,15 +80,15 @@ export default function Boardpage(){
 
             const title = ColumnTitle.trim();
 
-            const response = await axios.post("/api/columns", {
+            const response = await withFreshJWT((token) => axios.post("/api/columns", {
                 boardId,
                 title
             },{
                 headers: {
-                    Authorization: `Bearer ${jwt}`
+                    Authorization: `Bearer ${token}`
                 },
             }
-        );
+        ), () => router.replace("/login"));
 
             setcolumns((prev)=> [...prev,response.data]);
             setisCreateColumnopen(false)
@@ -124,15 +116,20 @@ export default function Boardpage(){
                 return;
             } 
 
-            await databases.deleteDocument(
-                db,
-                columnsId,
-                columnId
-            );
+            await withFreshJWT((token) => axios.delete(
+              "/api/columns/delete",
+              {
+                data: { columnId },
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            ), () => router.replace("/login"));
 
             setcolumns((prevcolumns) => prevcolumns.filter((column) => column.$id !== columnId));
         } catch (error) {
             console.error("Could not delete column: ", error)
+            toast.error(error.response?.data?.error ?? "Unable to delete column. Please try again.");
         }
     }
 
@@ -196,9 +193,8 @@ export default function Boardpage(){
     }
 
     return (
-      <div className="min-h-screen bg-zinc-950 p-4 text-zinc-950 sm:p-6 lg:p-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"></header>
-        <div className="min-w-0">
+      <div className="min-h-screen bg-zinc-950 p-5 text-zinc-100 sm:p-8 lg:px-12 lg:py-10">
+        <div className="min-w-0 border-b border-zinc-800/80 pb-6">
           <p className="mb-2 text-xs font-semibold tracking-widest text-indigo-400 uppercase">
             Your Workspace
           </p>
@@ -211,7 +207,7 @@ export default function Boardpage(){
             organize your tasks and keep your work moving
           </p>
         </div>
-        <div>
+        <div className="mt-6">
           <Dialog
             open={isCreateColumnopen}
             onOpenChange={setisCreateColumnopen}
@@ -244,9 +240,9 @@ export default function Boardpage(){
                 </div>
 
                 {error && (
-                    <p role="alert" className="text-sm text-red-400">
-                        {error}
-                    </p>
+                  <p role="alert" className="text-sm text-red-400">
+                    {error}
+                  </p>
                 )}
 
                 <DialogFooter className={"gap-2"}>
@@ -268,10 +264,12 @@ export default function Boardpage(){
             </DialogContent>
           </Dialog>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {columns.map((column) => (
+            <div
+            key={column.$id}
+            className="min-w-0">
             <Column
-              key={column.$id}
               columnId={column.$id}
               title={column.title}
               cards={cardscoll.filter((card) => card.columnId === column.$id)}
@@ -280,6 +278,7 @@ export default function Boardpage(){
               onrename={handlerenameColumn}
               onDelete={onDeleteColumn}
             />
+            </div>
           ))}
         </div>
       </div>

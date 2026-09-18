@@ -7,7 +7,7 @@ import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
 import { ID } from "appwrite";
 import {Card, CardContent} from "@/components/ui/card"
-import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
+import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogCancel, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
 import {
   Dialog,
@@ -22,10 +22,10 @@ import { useState } from "react";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [selectedcard, setselectedcard] = useState(null);
-const [Editing, setEditing] = useState(false);
-const [isRenameOpen, setisRenameOpen] = useState(false);
-const [isAddcardOpen, setisAddcardOpen] = useState(false);
-const [draftCard, setDraftCard] = useState(null);
+  const [Editing, setEditing] = useState(false);
+  const [isRenameOpen, setisRenameOpen] = useState(false);
+  const [isAddcardOpen, setisAddcardOpen] = useState(false);
+  const [draftCard, setDraftCard] = useState(null);
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -124,9 +124,9 @@ async function handleSave() {
 };
 
   return (
-    <div className="min-h-[300px] rounded-lg border p-4">
-      <h2 className="mb-4 font-semibold">{title}</h2>
-      <button onClick={() => setisRenameOpen(true)}>Rename</button>
+    <div className="min-h-[320px] rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 text-zinc-100 shadow-lg shadow-black/10">
+      <h2 className="mb-4 border-b border-zinc-800 pb-4 text-base font-semibold tracking-tight break-words">{title}</h2>
+      <button className="mr-2 rounded-lg border border-zinc-700/70 bg-zinc-800/60 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400" onClick={() => setisRenameOpen(true)}>Rename</button>
 
       <Dialog open={isRenameOpen} onOpenChange={setisRenameOpen}>
         <DialogContent>
@@ -146,18 +146,16 @@ async function handleSave() {
                 minLength={5}
               ></input>
             </div>
-            <button type="submit">Rename column</button>
-            <button type="button" onClick={() => setisRenameOpen(false)}>
+            <Button type="submit">Rename column</Button>
+            <Button type="button" onClick={() => setisRenameOpen(false)}>
               Cancel
-            </button>
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
 
       <AlertDialog>
-        <AlertDialogTrigger>
-          Delete Column
-        </AlertDialogTrigger>
+        <AlertDialogTrigger className="rounded-lg px-3 py-1.5 text-xs font-medium text-rose-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">Delete Column</AlertDialogTrigger>
 
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -168,22 +166,22 @@ async function handleSave() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={onDelete(columnId)}>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onDelete(columnId)}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <button onClick={() => onDelete(columnId)}>delete Column </button>
 
-      <div className="flex flex-col gap-3">
+      <div className="my-4 flex flex-col gap-3">
         {cards.map((card) => (
           <Card
             key={card.$id}
             size="sm"
             className={
-              "hover:bg-muted cursor-pointer flex-row items-center px-3 py-2"
+              "cursor-pointer flex-row items-center rounded-xl border border-zinc-700/60 bg-zinc-800/80 px-4 py-3 text-zinc-100 shadow-sm transition-colors hover:border-indigo-400/40 hover:bg-zinc-800"
             }
             onClick={() => setselectedcard(card)}
           >
@@ -280,9 +278,9 @@ async function handleSave() {
                 <p>{selectedcard?.dueDate || "No due date"}</p>
               </div>
               <DialogFooter>
-                <button type="button" onClick={handleEdit}>
+                <Button type="button" onClick={handleEdit}>
                   Edit
-                </button>
+                </Button>
 
                 <DialogClose asChild>
                   <button type="button" variant="outline">
@@ -296,7 +294,7 @@ async function handleSave() {
       </Dialog>
 
       <Dialog open={isAddcardOpen} onOpenChange={setisAddcardOpen}>
-        <DialogTrigger>+ Add Card</DialogTrigger>
+        <DialogTrigger className="w-full rounded-xl border border-dashed border-zinc-700 px-4 py-3 text-left text-sm font-medium text-zinc-400 transition-colors hover:border-indigo-400/50 hover:bg-indigo-500/5 hover:text-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">+ Add Card</DialogTrigger>
 
         <DialogContent>
           <DialogHeader>
@@ -338,10 +336,10 @@ async function handleSave() {
             </div>
 
             <DialogFooter>
-              <button type="button" onClick={() => setisAddcardOpen(false)}>
+              <Button type="button" onClick={() => setisAddcardOpen(false)}>
                 Cancel
-              </button>
-              <button type="submit">Create Card</button>
+              </Button>
+              <Button type="submit">Create Card</Button>
             </DialogFooter>
           </form>
         </DialogContent>

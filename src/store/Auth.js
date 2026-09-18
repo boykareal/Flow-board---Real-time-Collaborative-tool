@@ -37,6 +37,19 @@ export const userAuthStore = create()(
                 }
             },
 
+            async refreshJWT(){
+                try {
+                    const { jwt } = await account.createJWT();
+                    set({jwt});
+                    return jwt;
+                } catch (error) {
+                    if (error.code === 401) {
+                        set({session: null, jwt: null, user: null, authChecked: true, authChecking: false});
+                    }
+                    throw error;
+                }
+            },
+
             async login(email, password){
                 try {
                     if(email.length === 0 || !email.includes("@") || password.length < 6){

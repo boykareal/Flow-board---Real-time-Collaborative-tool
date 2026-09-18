@@ -34,10 +34,10 @@ export async function DELETE(request){
         .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
         .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
         .setJWT(jwt);
-        
+
         const account = new Account(client);
         const databases = new Databases(client);
-        const user = await account.get(); 
+        const user = await account.get();
 
         const column = await databases.getDocument(db, columnsId, columnId);
 
@@ -60,7 +60,7 @@ export async function DELETE(request){
                 { status: 403 },
             );
         }
-        
+
         const serverClient = new Client()
         .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
         .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
@@ -76,7 +76,7 @@ export async function DELETE(request){
                 Query.limit(1),
             ]
         );
-        
+
         if(result.documents.length !== 0){
             return NextResponse.json(
                 {error: "please remove or place them in some other column to delete"},
@@ -101,7 +101,7 @@ export async function DELETE(request){
               { status: 401 },
             );
           }
-          
+
           if (error.code === 403) {
             return NextResponse.json(
               { error: "You do not have permission to delete this column." },

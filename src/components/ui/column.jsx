@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { databases } from "@/lib/client/config";
 import { cardsId, db } from "@/models/name";
-import { ID } from "appwrite";
 import {Card, CardContent} from "@/components/ui/card"
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogCancel, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
 
@@ -19,6 +18,9 @@ import {
   DialogClose,
 } from "../ui/dialog";
 import { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { withFreshJWT } from "@/lib/client/auth-request";
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
   const [selectedcard, setselectedcard] = useState(null);
@@ -26,51 +28,54 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
   const [isRenameOpen, setisRenameOpen] = useState(false);
   const [isAddcardOpen, setisAddcardOpen] = useState(false);
   const [draftCard, setDraftCard] = useState(null);
+  const [error,seterror] = useState(null);
+  const [cardError, setCardError] = useState(null);
+  const router = useRouter();
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+  setCardError(null);
 
-  // Capture the form before awaiting anything.
   const form = e.currentTarget;
   const formData = new FormData(form);
 
   const cardTitle = formData.get("title");
-  const description = formData.get("description");
-  const dueDate = formData.get("dueDate");
-
-  if (
-    typeof cardTitle !== "string" ||
-    cardTitle.trim().length < 6
-  ) {
+  if (typeof cardTitle !== "string" || cardTitle.trim().length < 6) {
+    setCardError("Card title must contain at least 6 characters.");
     return;
   }
 
-  try {
-    const order = cards.length === 0 ? 0 : Math.max(...cards.map((card) => card.order)) + 1;
+  formData.set("title", cardTitle.trim());
+  formData.append("columnId", columnId);
 
-    const card = await databases.createDocument(
-      db,
-      cardsId,
-      ID.unique(),
-      {
-        title: cardTitle.trim(),
-        description:
-          typeof description === "string" ? description : "",
-        dueDate: typeof dueDate === "string" ? dueDate : "",
-        boardId,
-        columnId,
-        order: order,
-        labels: [],
-        assigneeId: "",
-      }
+
+  try {
+    const response = await withFreshJWT(
+      (token) =>
+        axios.post("/api/cards/create", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
+      () => router.replace("/login"),
     );
 
-    setCardsData((prevCards) => [...prevCards, card]);
+    const createdCard = response.data.card;
 
+    setCardsData((prevCards) => [...prevCards, createdCard]);
     form.reset();
     setisAddcardOpen(false);
   } catch (error) {
     console.error("Could not create card:", error);
+
+    if (axios.isAxiosError(error)) {
+      setCardError(
+        error.response?.data?.error ??
+          "Unable to create card. Please try again.",
+      );
+    } else {
+      setCardError("Something went wrong. Please try again.");
+    }
   }
 }; // handleSubmit ends here.
 
@@ -120,13 +125,29 @@ async function handleSave() {
     setEditing(false);
   } catch (error) {
     console.error("Failed to update card:", error);
+
+    if (axios.isAxiosError(error)) {
+      seterror(
+        error.response?.data?.error ??
+          "Unable to create card. Please try again.",
+      );
+    } else {
+      seterror("Something went wrong. Please try again.");
+    }
   }
 };
 
   return (
     <div className="min-h-[320px] rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 text-zinc-100 shadow-lg shadow-black/10">
-      <h2 className="mb-4 border-b border-zinc-800 pb-4 text-base font-semibold tracking-tight break-words">{title}</h2>
-      <button className="mr-2 rounded-lg border border-zinc-700/70 bg-zinc-800/60 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400" onClick={() => setisRenameOpen(true)}>Rename</button>
+      <h2 className="mb-4 border-b border-zinc-800 pb-4 text-base font-semibold tracking-tight break-words">
+        {title}
+      </h2>
+      <button
+        className="mr-2 rounded-lg border border-zinc-700/70 bg-zinc-800/60 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+        onClick={() => setisRenameOpen(true)}
+      >
+        Rename
+      </button>
 
       <Dialog open={isRenameOpen} onOpenChange={setisRenameOpen}>
         <DialogContent>
@@ -155,7 +176,9 @@ async function handleSave() {
       </Dialog>
 
       <AlertDialog>
-        <AlertDialogTrigger className="rounded-lg px-3 py-1.5 text-xs font-medium text-rose-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">Delete Column</AlertDialogTrigger>
+        <AlertDialogTrigger className="rounded-lg px-3 py-1.5 text-xs font-medium text-rose-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">
+          Delete Column
+        </AlertDialogTrigger>
 
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -173,7 +196,6 @@ async function handleSave() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
 
       <div className="my-4 flex flex-col gap-3">
         {cards.map((card) => (
@@ -293,8 +315,16 @@ async function handleSave() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isAddcardOpen} onOpenChange={setisAddcardOpen}>
-        <DialogTrigger className="w-full rounded-xl border border-dashed border-zinc-700 px-4 py-3 text-left text-sm font-medium text-zinc-400 transition-colors hover:border-indigo-400/50 hover:bg-indigo-500/5 hover:text-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">+ Add Card</DialogTrigger>
+      <Dialog
+        open={isAddcardOpen}
+        onOpenChange={(open) => {
+          setisAddcardOpen(open);
+          if (open) setCardError(null);
+        }}
+      >
+        <DialogTrigger className="w-full rounded-xl border border-dashed border-zinc-700 px-4 py-3 text-left text-sm font-medium text-zinc-400 transition-colors hover:border-indigo-400/50 hover:bg-indigo-500/5 hover:text-indigo-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
+          + Add Card
+        </DialogTrigger>
 
         <DialogContent>
           <DialogHeader>
@@ -303,7 +333,7 @@ async function handleSave() {
 
           <form onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="title">Title</label>
+              <Label htmlFor="title">Title</Label>
               <input
                 className="text-black"
                 id="title"
@@ -315,7 +345,7 @@ async function handleSave() {
             </div>
 
             <div>
-              <label htmlFor="description">Description</label>
+              <Label htmlFor="description">Description</Label>
               <input
                 className="text-black"
                 id="description"
@@ -326,7 +356,7 @@ async function handleSave() {
             </div>
 
             <div>
-              <label htmlFor="dueDate">Due date</label>
+              <Label htmlFor="dueDate">Due date</Label>
               <input
                 className="text-black"
                 id="dueDate"
@@ -334,6 +364,33 @@ async function handleSave() {
                 type="date"
               />
             </div>
+
+            <div>
+              <Label htmlFor="assigneeId">assigneeId</Label>
+              <input
+                className="text-black"
+                id="assigneeId"
+                name="assigneeId"
+                placeholder="Enter Id"
+                type="text"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="attachments">attachments</Label>
+              <input
+                type="file"
+                name="attachments"
+                multiple
+                accept="image/*,.pdf,.docx"
+              />
+            </div>
+
+            {cardError && (
+              <p role="alert" className="text-sm text-red-400">
+                {cardError}
+              </p>
+            )}
 
             <DialogFooter>
               <Button type="button" onClick={() => setisAddcardOpen(false)}>

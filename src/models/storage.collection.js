@@ -21,7 +21,7 @@ export default async function getOrCreateStorage() {
         false,
         true,
         10 * 1024 * 1024,
-        ["jpg", "png", "gif", "jpeg", "webp", "heic"],
+        ["jpg", "png", "gif", "jpeg", "webp", "heic", "pdf", "docx"],
       );
 
       console.log("Storage Created");

@@ -19,7 +19,7 @@ export async function createBoardsCollection(){
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             key: "title",
-            size: 100,
+            size: 256,
             required: true,
         });
 
@@ -35,7 +35,7 @@ export async function createBoardsCollection(){
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             key: "description",
-            size: 500,
+            size: 5000,
             required: false,
         });
 
@@ -70,4 +70,3 @@ export async function createBoardsCollection(){
         console.error("something went wrong while creating boards collection or attribute", error);
     }
 }
-

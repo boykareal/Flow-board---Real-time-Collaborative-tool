@@ -34,6 +34,10 @@ export default function Boardpage(){
     const [error, seterror] = useState(null);
     const checksession = userAuthStore((state) => state.checkSession);
 
+    const memberIndex = boarddata?.members?.indexOf(user.$id) ?? -1;
+    const role = memberIndex >= 0 ? boarddata?.memberRoles?.[memberIndex] : null;
+    const canEdit = role === "owner" || role === "editor";
+
     const handlerenameColumn = async(e) => {
         try {
             e.preventDefault();
@@ -266,18 +270,17 @@ export default function Boardpage(){
         </div>
         <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {columns.map((column) => (
-            <div
-            key={column.$id}
-            className="min-w-0">
-            <Column
-              columnId={column.$id}
-              title={column.title}
-              cards={cardscoll.filter((card) => card.columnId === column.$id)}
-              boardId={boardId}
-              setCardsData={setcardsdata}
-              onrename={handlerenameColumn}
-              onDelete={onDeleteColumn}
-            />
+            <div key={column.$id} className="min-w-0">
+              <Column
+                columnId={column.$id}
+                title={column.title}
+                cards={cardscoll.filter((card) => card.columnId === column.$id)}
+                boardId={boardId}
+                setCardsData={setcardsdata}
+                onrename={handlerenameColumn}
+                onDelete={onDeleteColumn}
+                canEdit={canEdit}
+              />
             </div>
           ))}
         </div>

@@ -3,11 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { databases } from "@/lib/client/config";
-import { cardsId, db } from "@/models/name";
 import {Card, CardContent} from "@/components/ui/card"
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogDescription,AlertDialogAction, AlertDialogCancel, AlertDialogFooter, AlertDialogTitle} from "../ui/alert-dialog"
-
 import {
   Dialog,
   DialogContent,
@@ -22,7 +19,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { withFreshJWT } from "@/lib/client/auth-request";
 
-function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete}) {
+function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete, canEdit}) {
   const [selectedcard, setselectedcard] = useState(null);
   const [Editing, setEditing] = useState(false);
   const [isRenameOpen, setisRenameOpen] = useState(false);
@@ -77,9 +74,14 @@ const handleSubmit = async (e) => {
       setCardError("Something went wrong. Please try again.");
     }
   }
-}; // handleSubmit ends here.
+};
 
 function handleEdit() {
+   if (!canEdit) {
+     seterror("Only owners and editors can edit cards.");
+     return;
+   }
+
   if (!selectedcard) return;
 
   setDraftCard({
@@ -93,48 +95,42 @@ function handleEdit() {
 async function handleSave() {
   if (!draftCard) return;
 
-  const title = draftCard.title.trim();
+   try {
+     const response = await withFreshJWT(
+       (token) =>
+         axios.patch(
+           `/api/cards/${selectedcard.$id}`,
+           {
+             title: draftCard.title,
+             description: draftCard.description,
+             assigneeId: draftCard.assigneeId,
+           },
+           {
+             headers: {
+               Authorization: `Bearer ${token}`,
+             },
+           },
+         ),
+       () => router.replace("/login"),
+     );
 
-  if (title.length < 6) {
-    alert("Title must contain at least 6 characters");
-    return;
-  }
+     const updatedCard = response.data;
 
-  try {
-    const updatedCard = await databases.updateDocument(
-      db,
-      cardsId,
-      draftCard.$id,
-      {
-        title,
-        description: draftCard.description,
-        labels: draftCard.labels,
-        assigneeId: draftCard.assigneeId,
-        dueDate: draftCard.dueDate,
-      }
-    );
+     setCardsData((prev) => prev.map((card)=> card.$id === updatedCard.$id ? updatedCard : card))
+     setselectedcard(updatedCard);
+     setEditing(false);
+   } catch (error) {
+     console.error("Failed to update card:", error);
 
-    setCardsData((previousCards) =>
-      previousCards.map((card) =>
-        card.$id === updatedCard.$id ? updatedCard : card
-      )
-    );
-
-    setselectedcard(updatedCard);
-    setDraftCard(updatedCard);
-    setEditing(false);
-  } catch (error) {
-    console.error("Failed to update card:", error);
-
-    if (axios.isAxiosError(error)) {
-      seterror(
-        error.response?.data?.error ??
-          "Unable to create card. Please try again.",
-      );
-    } else {
-      seterror("Something went wrong. Please try again.");
-    }
-  }
+     if (axios.isAxiosError(error)) {
+       seterror(
+         error.response?.data?.error ??
+           "Unable to update card. Please try again.",
+       );
+     } else {
+       seterror("Something went wrong. Please try again.");
+     }
+   }
 };
 
   return (
@@ -292,23 +288,22 @@ async function handleSave() {
 
               <div>
                 <h4 className="font-medium">Assignees</h4>
-                <p>{selectedcard?.assigneeId?.join(", ") || "No assignees"}</p>
+                <p>{selectedcard?.assigneeId || "No assignees"}</p>
               </div>
 
               <div>
                 <h4 className="font-medium">Due date</h4>
-                <p>{selectedcard?.dueDate || "No due date"}</p>
+                <p>{selectedcard?.duedate || "No due date"}</p>
               </div>
+
+              {error && <p className="text-sm text-red-400">{error}</p>}
+
               <DialogFooter>
                 <Button type="button" onClick={handleEdit}>
                   Edit
                 </Button>
 
-                <DialogClose asChild>
-                  <button type="button" variant="outline">
-                    Close
-                  </button>
-                </DialogClose>
+                <DialogClose>Close</DialogClose>
               </DialogFooter>
             </div>
           )}

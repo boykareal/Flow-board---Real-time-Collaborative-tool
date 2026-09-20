@@ -18,8 +18,48 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { withFreshJWT } from "@/lib/client/auth-request";
+import { useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+function SortableCard({ card, canEdit, onClick }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: card.$id,
+      data: {
+        type: "card",
+        columnId: card.columnId,
+      },
+    });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card
+        size="sm"
+        className="cursor-pointer flex-row items-center rounded-xl border border-zinc-700/60 bg-zinc-800/80 px-4 py-3 text-zinc-100 shadow-sm transition-colors hover:border-indigo-400/40 hover:bg-zinc-800"
+        {...attributes}
+        {...(canEdit ? listeners : {})}
+        onClick={onClick}
+      >
+        <CardContent className="min-w-0 flex-1 px-0">
+          <p className="truncate font-medium">{card.title}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete, canEdit}) {
+  const { setNodeRef: setColumnDropRef } = useDroppable({
+    id: `column-${columnId}`,
+    data: { type: "column", columnId },
+  });
   const [selectedcard, setselectedcard] = useState(null);
   const [Editing, setEditing] = useState(false);
   const [isRenameOpen, setisRenameOpen] = useState(false);
@@ -133,6 +173,37 @@ async function handleSave() {
    }
 };
 
+async function handleDeleteCard() {
+  if (!selectedcard || !canEdit) {
+    seterror("Only owners and editors can delete cards.");
+    return;
+  }
+
+  try {
+    await withFreshJWT(
+      (token) =>
+        axios.delete(`/api/cards/${selectedcard.$id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      () => router.replace("/login"),
+    );
+
+    setCardsData((previousCards) =>
+      previousCards.filter((card) => card.$id !== selectedcard.$id),
+    );
+    setselectedcard(null);
+    setDraftCard(null);
+    setEditing(false);
+  } catch (error) {
+    console.error("Failed to delete card:", error);
+    seterror(
+      axios.isAxiosError(error)
+        ? error.response?.data?.error ?? "Unable to delete card."
+        : "Unable to delete card.",
+    );
+  }
+}
+
   return (
     <div className="min-h-[320px] rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 text-zinc-100 shadow-lg shadow-black/10">
       <h2 className="mb-4 border-b border-zinc-800 pb-4 text-base font-semibold tracking-tight break-words">
@@ -171,7 +242,7 @@ async function handleSave() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog>
+      {canEdit && <AlertDialog>
         <AlertDialogTrigger className="rounded-lg px-3 py-1.5 text-xs font-medium text-rose-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400">
           Delete Column
         </AlertDialogTrigger>
@@ -191,23 +262,25 @@ async function handleSave() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
 
-      <div className="my-4 flex flex-col gap-3">
-        {cards.map((card) => (
-          <Card
-            key={card.$id}
-            size="sm"
-            className={
-              "cursor-pointer flex-row items-center rounded-xl border border-zinc-700/60 bg-zinc-800/80 px-4 py-3 text-zinc-100 shadow-sm transition-colors hover:border-indigo-400/40 hover:bg-zinc-800"
-            }
-            onClick={() => setselectedcard(card)}
-          >
-            <CardContent className={"min-w-0 flex-1 px-0"}>
-              <p className="truncate font-medium">{card.title}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div
+        ref={setColumnDropRef}
+        className="my-4 flex min-h-24 flex-col gap-3"
+      >
+        <SortableContext
+          items={cards.map((card) => card.$id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {cards.map((card) => (
+            <SortableCard
+              key={card.$id}
+              card={card}
+              canEdit={canEdit}
+              onClick={() => setselectedcard(card)}
+            />
+          ))}
+        </SortableContext>
       </div>
 
       <Dialog
@@ -302,6 +375,28 @@ async function handleSave() {
                 <Button type="button" onClick={handleEdit}>
                   Edit
                 </Button>
+
+                {canEdit && (
+                  <AlertDialog>
+                    <AlertDialogTrigger className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700">
+                      Delete
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this card?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteCard}>
+                          Delete card
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
 
                 <DialogClose>Close</DialogClose>
               </DialogFooter>

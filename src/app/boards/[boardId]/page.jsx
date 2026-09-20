@@ -18,6 +18,12 @@ import {Dialog,DialogClose,
   DialogTitle,
   DialogTrigger} from '../../../components/ui/dialog'
 import axios from "axios";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
   
 
 export default function Boardpage(){
@@ -33,10 +39,57 @@ export default function Boardpage(){
     const boardId = params.boardId;
     const [error, seterror] = useState(null);
     const checksession = userAuthStore((state) => state.checkSession);
+    const sensors = useSensors(
+      useSensor(PointerSensor, {
+        activationConstraint: { distance: 8 },
+      }),
+    );
 
     const memberIndex = boarddata?.members?.indexOf(user.$id) ?? -1;
     const role = memberIndex >= 0 ? boarddata?.memberRoles?.[memberIndex] : null;
     const canEdit = role === "owner" || role === "editor";
+
+    async function handleDragEnd({ active, over }) {
+      if (!over || !canEdit) return;
+
+      const draggedCard = cardscoll.find((card) => card.$id === active.id);
+
+      if (!draggedCard) return;
+
+      const targetColumnId = over.data.current?.columnId ?? over.id;
+
+      const newOrder = cardscoll.filter(
+        (card) =>
+          card.columnId === targetColumnId && card.$id !== draggedCard.$id,
+      ).length;
+      const previousCards = cardscoll;
+
+      setcardsdata((cards) =>
+        cards.map((card) =>
+          card.$id === draggedCard.$id
+            ? { ...card, columnId: targetColumnId, order: newOrder }
+            : card,
+        ),
+      );
+
+      try {
+        await withFreshJWT((token) =>
+          axios.patch(
+            `/api/cards/${draggedCard.$id}`,
+            { columnId: targetColumnId, order: newOrder },
+            { headers: { Authorization: `Bearer ${token}` } },
+          ),
+          () => router.replace("/login"),
+        );
+      } catch (error) {
+        setcardsdata(previousCards);
+        toast.error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error ?? "Unable to move card."
+            : "Unable to move card.",
+        );
+      }
+    }
 
     const handlerenameColumn = async(e) => {
         try {
@@ -268,22 +321,27 @@ export default function Boardpage(){
             </DialogContent>
           </Dialog>
         </div>
-        <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {columns.map((column) => (
-            <div key={column.$id} className="min-w-0">
-              <Column
-                columnId={column.$id}
-                title={column.title}
-                cards={cardscoll.filter((card) => card.columnId === column.$id)}
-                boardId={boardId}
-                setCardsData={setcardsdata}
-                onrename={handlerenameColumn}
-                onDelete={onDeleteColumn}
-                canEdit={canEdit}
-              />
-            </div>
-          ))}
-        </div>
+        <DndContext sensors={sensors}
+        onDragEnd={handleDragEnd}>
+          <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {columns.map((column) => (
+              <div key={column.$id} className="min-w-0">
+                <Column
+                  columnId={column.$id}
+                  title={column.title}
+                  cards={cardscoll.filter(
+                    (card) => card.columnId === column.$id,
+                  )}
+                  boardId={boardId}
+                  setCardsData={setcardsdata}
+                  onrename={handlerenameColumn}
+                  onDelete={onDeleteColumn}
+                  canEdit={canEdit}
+                />
+              </div>
+            ))}
+          </div>
+        </DndContext>
       </div>
     );
 }

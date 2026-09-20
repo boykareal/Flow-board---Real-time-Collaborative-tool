@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { columnsId, db, boardsId, cardsId } from "@/models/name";
-import { Client, Account, AppwriteException , Databases, Permission, Role, Query} from "node-appwrite";
+import { Client, Account, AppwriteException, Databases, Query } from "node-appwrite";
 
 export async function DELETE(request){
     try {
         const { columnId } = await request.json();
-        const authorization = request.headers.get("Authorization");
+        const authorization = request.headers.get("authorization");
 
         if (!authorization?.startsWith("Bearer ")) {
             return NextResponse.json(
@@ -30,20 +30,27 @@ export async function DELETE(request){
             )
         }
 
-        const client = new Client()
+        const userClient = new Client()
         .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
         .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
         .setJWT(jwt);
 
-        const account = new Account(client);
-        const databases = new Databases(client);
+        const account = new Account(userClient);
         const user = await account.get();
 
-        const column = await databases.getDocument(db, columnsId, columnId);
+        const serverClient = new Client()
+        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
+        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
+        .setKey(process.env.APPWRITE_API_KEY);
 
-        const board = await databases.getDocument(db, boardsId, column.boardId);
+        const serverDatabases = new Databases(serverClient);
+        const column = await serverDatabases.getDocument(db, columnsId, columnId);
 
-        const memberIndex = board.members.indexOf(user.$id);
+        const board = await serverDatabases.getDocument(db, boardsId, column.boardId);
+
+        const members = Array.isArray(board.members) ? board.members : [];
+        const memberRoles = Array.isArray(board.memberRoles) ? board.memberRoles : [];
+        const memberIndex = members.indexOf(user.$id);
 
         if (memberIndex === -1) {
           return NextResponse.json(
@@ -52,7 +59,7 @@ export async function DELETE(request){
           );
         }
 
-        const role = board.memberRoles[memberIndex];
+        const role = memberRoles[memberIndex];
 
         if (role !== "owner" && role !== "editor") {
             return NextResponse.json(
@@ -60,13 +67,6 @@ export async function DELETE(request){
                 { status: 403 },
             );
         }
-
-        const serverClient = new Client()
-        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT)
-        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID)
-        .setKey(process.env.APPWRITE_API_KEY);
-
-        const serverDatabases = new Databases(serverClient);
 
         const result = await serverDatabases.listDocuments(
             db,

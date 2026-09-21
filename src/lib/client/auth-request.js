@@ -1,7 +1,6 @@
 import axios from "axios";
 import { userAuthStore } from "@/store/Auth";
 
-// Refresh only authentication failures; never retry permission or network errors.
 export async function withFreshJWT(request, onSessionExpired) {
   async function refresh() {
     try {

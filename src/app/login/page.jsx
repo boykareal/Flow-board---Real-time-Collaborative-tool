@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,22 @@ export default function AuthPage(){
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const login = userAuthStore((state)=> state.login)
+    const user = userAuthStore((state) => state.user);
+    const hydrated = userAuthStore((state) => state.hydrated);
+    const authChecked = userAuthStore((state) => state.authChecked);
+    const checkSession = userAuthStore((state) => state.checkSession);
+
+    useEffect(() => {
+      if (hydrated && !authChecked) {
+        void checkSession();
+      }
+    }, [hydrated, authChecked, checkSession]);
+
+    useEffect(() => {
+      if (hydrated && authChecked && user) {
+        router.replace("/boards");
+      }
+    }, [hydrated, authChecked, user, router]);
 
     async function handleSubmit(e){
         e.preventDefault();

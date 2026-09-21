@@ -1,6 +1,7 @@
 import "./app.css"
 import { Toaster } from "@/components/ui/sonner";
 import AuthBootstrap from "@/components/AuthBootstrap";
+import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 
 export const metadata = {
   title: "Appwrite + Next.js",
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={"bg-[#FAFAFB] font-[Inter] text-sm text-[#56565C]"}>
         <AuthBootstrap />
+        <AuthenticatedHeader />
         {children}
         <Toaster />
       </body>

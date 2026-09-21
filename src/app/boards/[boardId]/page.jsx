@@ -2,7 +2,7 @@
 import { useParams, useRouter } from "next/navigation"
 import { userAuthStore } from "@/store/Auth";
 import { Account, ID, Query } from "appwrite";
-import { databases } from "@/lib/client/config";
+import { client, databases } from "@/lib/client/config";
 import { withFreshJWT } from "@/lib/client/auth-request";
 import { boardsId, columnsId, db , cardsId} from "@/models/name";
 import Column from "@/components/ui/column";
@@ -24,6 +24,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+
   
 
 export default function Boardpage(){
@@ -48,6 +49,45 @@ export default function Boardpage(){
     const memberIndex = boarddata?.members?.indexOf(user.$id) ?? -1;
     const role = memberIndex >= 0 ? boarddata?.memberRoles?.[memberIndex] : null;
     const canEdit = role === "owner" || role === "editor";
+
+    useEffect(() => {
+      if (!user || !boardId) return;
+
+      const unsubscribe = client.subscribe(
+        `collections.${cardsId}.documents`,
+        (response) => {
+          const card = response.payload;
+
+          if (card?.boardId !== boardId) return;
+
+          setcardsdata((previousCards) => {
+            if (response.events.some((event) => event.includes(".create"))) {
+              const exists = previousCards.some(
+                (existingCard) => existingCard.$id === card.$id,
+              );
+
+              return exists ? previousCards : [...previousCards, card];
+            }
+
+            if (response.events.some((event) => event.includes(".update"))) {
+              return previousCards.map((existingCard) =>
+                existingCard.$id === card.$id ? card : existingCard,
+              );
+            }
+
+            if (response.events.some((event) => event.includes(".delete"))) {
+              return previousCards.filter(
+                (existingCard) => existingCard.$id !== card.$id,
+              );
+            }
+
+            return previousCards;
+          });
+        },
+      );
+
+      return unsubscribe;
+    }, [user, boardId]);
 
     async function handleDragEnd({ active, over }) {
       if (!over || !canEdit) return;

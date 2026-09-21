@@ -19,11 +19,30 @@ import {Dialog,DialogClose,
   DialogTrigger} from '../../../components/ui/dialog'
 import axios from "axios";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   DndContext,
   PointerSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
   
 
@@ -39,6 +58,7 @@ export default function Boardpage(){
     const authChecked = userAuthStore((state) => state.authChecked);
     const boardId = params.boardId;
     const [error, seterror] = useState(null);
+    const [memberToRemove, setMemberToRemove] = useState(null);
     const checksession = userAuthStore((state) => state.checkSession);
     const sensors = useSensors(
       useSensor(PointerSensor, {
@@ -202,6 +222,33 @@ export default function Boardpage(){
         }
     }
 
+    async function handleDeleteMember(memberId) {
+      try {
+        const response = await withFreshJWT(
+          (token) =>
+            axios.delete(`/api/boards/${boardId}/members/${memberId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+          () => router.replace("/login"),
+        );
+
+        setboardata((previousBoard) => ({
+          ...previousBoard,
+          members: response.data.members,
+          memberRoles: response.data.memberRoles,
+        }));
+        toast.success("Member removed from the board.");
+      } catch (error) {
+        toast.error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error ?? "Unable to remove member."
+            : "Unable to remove member.",
+        );
+      }
+    }
+
     async function onDeleteColumn(columnId){
         try {
             const cardsinColumns = cardscoll.filter(
@@ -303,6 +350,79 @@ export default function Boardpage(){
           <p className="mt-2 text-sm text-zinc-400">
             organize your tasks and keep your work moving
           </p>
+
+          <Sheet>
+            <SheetTrigger className="mt-5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-800">
+              Members
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>Board Members</SheetTitle>
+                <SheetDescription>
+                  Board members will appear here.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-3">
+                {boarddata?.members?.map((memberId) => (
+                  <div
+                    key={memberId}
+                    className="flex justify-between rounded-lg border border-zinc-700 p-3"
+                  >
+                    {memberId}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>...</DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/profile/${memberId}`)}
+                        >
+                          profile
+                        </DropdownMenuItem>
+                        {role === "owner" && memberId !== user.$id && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => setMemberToRemove(memberId)}
+                            >
+                              Remove Member
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Promote</DropdownMenuItem>
+                            <DropdownMenuItem>Demote</DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <AlertDialog
+            open={memberToRemove !== null}
+            onOpenChange={(open) => {
+              if (!open) setMemberToRemove(null);
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove this member?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  They will be unassigned from their cards and removed from this board.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    const memberId = memberToRemove;
+                    setMemberToRemove(null);
+                    if (memberId) void handleDeleteMember(memberId);
+                  }}
+                >
+                  Remove member
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         <div className="mt-6">
           <Dialog
@@ -361,8 +481,7 @@ export default function Boardpage(){
             </DialogContent>
           </Dialog>
         </div>
-        <DndContext sensors={sensors}
-        onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {columns.map((column) => (
               <div key={column.$id} className="min-w-0">

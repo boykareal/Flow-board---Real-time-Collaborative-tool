@@ -4,6 +4,7 @@ import {createCardsCollection} from "./cards.collection.js";
 import {createColumnsCollection} from "./columns.collection.js";
 import {createCommentsCollection} from "./comments.collection.js";
 import { createMembersCollection } from "./members.collection.js";
+import { createProfilesCollection } from "./profiles.collection.js";
 import { databases } from "../lib/server/config.js";
 
 export default async function getOrCreateDB() {
@@ -19,7 +20,8 @@ export default async function getOrCreateDB() {
         createCardsCollection(),
         createColumnsCollection(),
         createCommentsCollection(),
-        createMembersCollection()
+        createMembersCollection(),
+        createProfilesCollection(),
       ]);
       console.log("Collection created succesfully");
       console.log("Database connected");

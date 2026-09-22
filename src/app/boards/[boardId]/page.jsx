@@ -1,7 +1,7 @@
 "use client"
 import { useParams, useRouter } from "next/navigation"
 import { userAuthStore } from "@/store/Auth";
-import { Account, ID, Query } from "appwrite";
+import {  Query } from "appwrite";
 import { client, databases } from "@/lib/client/config";
 import { withFreshJWT } from "@/lib/client/auth-request";
 import { boardsId, columnsId, db , cardsId} from "@/models/name";
@@ -13,8 +13,6 @@ import {Dialog,DialogClose,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
-  DialogPortal,
   DialogTitle,
   DialogTrigger} from '../../../components/ui/dialog'
 import axios from "axios";
@@ -43,6 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
   
 
@@ -69,6 +68,8 @@ export default function Boardpage(){
     const memberIndex = boarddata?.members?.indexOf(user.$id) ?? -1;
     const role = memberIndex >= 0 ? boarddata?.memberRoles?.[memberIndex] : null;
     const canEdit = role === "owner" || role === "editor";
+    const [memberEdit, setMemberToEdit] = useState(null);
+    const [selectedRole, setSelectedRole] = useState("");
 
     useEffect(() => {
       if (!user || !boardId) return;
@@ -277,6 +278,44 @@ export default function Boardpage(){
         }
     }
 
+    async function setMemberRole(){
+      if(!memberEdit?.id || !selectedRole) return;
+
+      try {
+        const response = await withFreshJWT(
+          (token) =>
+            axios.patch(
+              `/api/boards/${boardId}/members/${memberEdit.id}/role`,
+              {
+                role: selectedRole,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            ),
+          () => router.replace("/login"),
+        );
+
+        setboardata((previousBoard) => ({
+          ...previousBoard,
+          members: response.data.members,
+          memberRoles: response.data.memberRoles,
+        }));
+
+        setMemberToEdit(null);
+        setSelectedRole("");
+        toast.success("Member role updated.");
+      } catch (error) {
+        toast.error(
+          axios.isAxiosError(error)
+            ? (error.response?.data?.error ?? "Unable to change member role.")
+            : "Something went wrong.",
+        );
+      }
+    }
+
     useEffect(() => {
         if (!hydrated) return;
         
@@ -384,8 +423,17 @@ export default function Boardpage(){
                             >
                               Remove Member
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Promote</DropdownMenuItem>
-                            <DropdownMenuItem>Demote</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const selectedMemberIndex = boarddata.members.indexOf(memberId);
+                                const currentRole = boarddata.memberRoles?.[selectedMemberIndex] ?? "viewer";
+
+                                setMemberToEdit({ id: memberId, currentRole });
+                                setSelectedRole(currentRole);
+                              }}
+                            >
+                              Change Role
+                            </DropdownMenuItem>
                           </>
                         )}
                       </DropdownMenuContent>
@@ -423,6 +471,55 @@ export default function Boardpage(){
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <Dialog
+            open={memberEdit !== null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setMemberToEdit(null);
+                setSelectedRole("");
+              }
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Change member role</DialogTitle>
+                <DialogDescription>
+                  Choose the role for member {memberEdit?.id}.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-2 py-2">
+                <label htmlFor="member-role" className="text-sm font-medium">
+                  Role
+                </label>
+                <select
+                  id="member-role"
+                  value={selectedRole}
+                  onChange={(event) => setSelectedRole(event.target.value)}
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100"
+                >
+                  <option value="viewer">Viewer</option>
+                  <option value="editor">Editor</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </div>
+
+              <DialogFooter>
+                <DialogClose className="rounded-md border border-zinc-700 px-3 py-2 text-sm">
+                  Cancel
+                </DialogClose>
+                <Button
+                  type="button"
+                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!selectedRole}
+                  onClick={setMemberRole}
+                >
+                  Save role
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         <div className="mt-6">
           <Dialog

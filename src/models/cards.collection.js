@@ -10,6 +10,8 @@ export async function createCardsCollection(){
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             name: "cards",
+            // Permissions are assigned per card when it is created.
+            documentSecurity: true,
         })
 
         console.log("Cards collection created Succesfullly: ")

@@ -10,6 +10,8 @@ export async function createColumnsCollection(){
             databaseId: DATABASE_ID,
             collectionId: COLLECTION_ID,
             name: "columns",
+            // Permissions are assigned per column when it is created.
+            documentSecurity: true,
         })
 
         console.log("Columns collection created succesfully: ")

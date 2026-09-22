@@ -50,6 +50,25 @@ export const userAuthStore = create()(
                 }
             },
 
+            async createOrUpdateProfile(displayName){
+                const jwt = get().jwt || await get().refreshJWT();
+                const response = await fetch("/api/profile", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${jwt}`,
+                    },
+                    body: JSON.stringify({ displayName }),
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error ?? "Unable to save profile");
+                }
+
+                return result;
+            },
+
             async login(email, password){
                 try {
                     if(email.length === 0 || !email.includes("@") || password.length < 6){

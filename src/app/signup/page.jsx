@@ -21,6 +21,10 @@ import { userAuthStore } from "@/store/Auth";
 export default function SignupPage() {
   const router = useRouter();
   const createAccount = userAuthStore((state) => state.createAccount);
+  const login = userAuthStore((state) => state.login);
+  const createOrUpdateProfile = userAuthStore(
+    (state) => state.createOrUpdateProfile,
+  );
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,7 +43,9 @@ export default function SignupPage() {
 
     try {
       await createAccount(name, email, password);
-      router.push("/login");
+      await login(email, password);
+      await createOrUpdateProfile(name);
+      router.push("/boards");
     } catch (error) {
       setErrorMessage("Unable to create account. Please try again.");
     }

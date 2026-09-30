@@ -119,7 +119,7 @@ export default function Boardpage(){
       if (!user || !boardId) return;
 
       const unsubscribe = client.subscribe(
-        `collections.${cardsId}.documents`,
+        `databases.${db}.collections.${cardsId}.documents`,
         (response) => {
           const card = response.payload;
 
@@ -155,35 +155,55 @@ export default function Boardpage(){
     }, [user, boardId]);
 
     async function handleDragEnd({ active, over }) {
-      if (!over || !canEdit) return;
+      if (!over || over.id === active.id || !canEdit) return;
 
       const draggedCard = cardscoll.find((card) => card.$id === active.id);
 
       if (!draggedCard) return;
 
-      const targetColumnId = over.data.current?.columnId ?? over.id;
+      const targetColumnId = over.data.current?.columnId ??
+        (String(over.id).startsWith("column-") ? String(over.id).slice(7) : null);
+      if (!targetColumnId) return;
 
-      const newOrder = cardscoll.filter(
-        (card) =>
-          card.columnId === targetColumnId && card.$id !== draggedCard.$id,
-      ).length;
+      const sourceColumnId = draggedCard.columnId;
+      const sortedCardsIn = (columnId) => cardscoll
+        .filter((card) => card.columnId === columnId && card.$id !== draggedCard.$id)
+        .sort((first, second) => (first.order ?? 0) - (second.order ?? 0));
+      const sourceCards = sortedCardsIn(sourceColumnId);
+      const targetCards = sourceColumnId === targetColumnId
+        ? sourceCards
+        : sortedCardsIn(targetColumnId);
+      const overCardIndex = over.data.current?.type === "card"
+        ? targetCards.findIndex((card) => card.$id === over.id)
+        : -1;
+      const insertAt = overCardIndex < 0 ? targetCards.length : overCardIndex;
+      const destinationCards = [...targetCards];
+      destinationCards.splice(insertAt, 0, draggedCard);
+
+      const updates = sourceColumnId === targetColumnId
+        ? destinationCards.map((card, order) => ({ id: card.$id, columnId: targetColumnId, order }))
+        : [
+            ...sourceCards.map((card, order) => ({ id: card.$id, columnId: sourceColumnId, order })),
+            ...destinationCards.map((card, order) => ({ id: card.$id, columnId: targetColumnId, order })),
+          ];
+      const changedUpdates = updates.filter((update) => {
+        const card = cardscoll.find((existingCard) => existingCard.$id === update.id);
+        return card.columnId !== update.columnId || card.order !== update.order;
+      });
+      if (changedUpdates.length === 0) return;
+
       const previousCards = cardscoll;
-
-      setcardsdata((cards) =>
-        cards.map((card) =>
-          card.$id === draggedCard.$id
-            ? { ...card, columnId: targetColumnId, order: newOrder }
-            : card,
-        ),
-      );
+      const updatesById = new Map(changedUpdates.map((update) => [update.id, update]));
+      setcardsdata((cards) => cards.map((card) => {
+        const update = updatesById.get(card.$id);
+        return update ? { ...card, columnId: update.columnId, order: update.order } : card;
+      }));
 
       try {
         await withFreshJWT((token) =>
-          axios.patch(
-            `/api/cards/${draggedCard.$id}`,
-            { columnId: targetColumnId, order: newOrder },
-            { headers: { Authorization: `Bearer ${token}` } },
-          ),
+          axios.patch("/api/cards/reorder", { boardId, updates: changedUpdates }, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
           () => router.replace("/login"),
         );
       } catch (error) {

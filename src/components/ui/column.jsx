@@ -56,6 +56,7 @@ function SortableCard({ card, canEdit, onClick }) {
 }
 
 function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDelete, canEdit}) {
+  const orderedCards = [...cards].sort((first, second) => (first.order ?? 0) - (second.order ?? 0));
   const { setNodeRef: setColumnDropRef } = useDroppable({
     id: `column-${columnId}`,
     data: { type: "column", columnId },
@@ -269,10 +270,10 @@ async function handleDeleteCard() {
         className="my-4 flex min-h-24 flex-col gap-3"
       >
         <SortableContext
-          items={cards.map((card) => card.$id)}
+          items={orderedCards.map((card) => card.$id)}
           strategy={verticalListSortingStrategy}
         >
-          {cards.map((card) => (
+          {orderedCards.map((card) => (
             <SortableCard
               key={card.$id}
               card={card}

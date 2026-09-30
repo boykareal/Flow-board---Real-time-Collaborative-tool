@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { userAuthStore } from "@/store/Auth";
 import { withFreshJWT } from "@/lib/client/auth-request";
 import { client } from "@/lib/client/config";
-import { invitationsId } from "@/models/name";
+import { db, invitationsId } from "@/models/name";
 
 export default function InvitationInbox() {
   const user = userAuthStore((state) => state.user);
@@ -38,7 +38,7 @@ export default function InvitationInbox() {
 
   useEffect(() => {
     if (!user) return;
-    return client.subscribe(`collections.${invitationsId}.documents`, (event) => {
+    return client.subscribe(`databases.${db}.collections.${invitationsId}.documents`, (event) => {
       if (event.payload?.recipientId === user.$id) void loadInvitations();
     });
   }, [user, loadInvitations]);

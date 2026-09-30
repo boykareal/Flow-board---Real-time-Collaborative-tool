@@ -2,6 +2,7 @@ import "./app.css"
 import { Toaster } from "@/components/ui/sonner";
 import AuthBootstrap from "@/components/AuthBootstrap";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
+import InvitationInbox from "@/components/InvitationInbox";
 
 export const metadata = {
   title: "Appwrite + Next.js",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         <AuthBootstrap />
         <AuthenticatedHeader />
         {children}
+        <InvitationInbox />
         <Toaster />
       </body>
     </html>

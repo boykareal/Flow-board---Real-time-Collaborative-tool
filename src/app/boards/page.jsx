@@ -16,7 +16,7 @@ export default function dashboardPage(){
     const authChecked = userAuthStore((state) => state.authChecked);
     const router = useRouter();
     useEffect(() => {
-        const getBoards = async() => {
+        const getBoards = async () => {
             if (!hydrated || !authChecked) {
                 return;
             }
@@ -26,15 +26,15 @@ export default function dashboardPage(){
                 return;
             }
 
-            if(user){
-              const result = await databases.listDocuments(db, boardsId, [
-                Query.contains("members", user.$id),
-              ]);
-              setboards(result.documents)
-            }
+            const result = await databases.listDocuments(db, boardsId, [
+              Query.contains("members", user.$id),
+            ]);
+            setboards(result.documents);
         };
 
-        getBoards()
+        getBoards();
+        window.addEventListener("flowboard:boards-refresh", getBoards);
+        return () => window.removeEventListener("flowboard:boards-refresh", getBoards);
     },[user,hydrated,authChecked,router]);
 
     if (!hydrated || !authChecked || !user) {

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "setup:db": "node --env-file=.env src/models/dbsetup.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

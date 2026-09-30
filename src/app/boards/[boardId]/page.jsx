@@ -1,5 +1,6 @@
 "use client"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link";
 import { userAuthStore } from "@/store/Auth";
 import {  Query } from "appwrite";
 import { client, databases } from "@/lib/client/config";
@@ -42,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
   
 
@@ -70,6 +72,48 @@ export default function Boardpage(){
     const canEdit = role === "owner" || role === "editor";
     const [memberEdit, setMemberToEdit] = useState(null);
     const [selectedRole, setSelectedRole] = useState("");
+    const [searchMemberId, setSearchMemberId] = useState("");
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+    const [isAddingMember, setIsAddingMember] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+    const [searchError, setSearchError] = useState("");
+    const [requestedUserIds, setRequestedUserIds] = useState([]);
+
+    useEffect(() => {
+      const query = searchMemberId.trim();
+      if (!isAddMemberOpen || query.length < 2 || !user) {
+        setSearchResults([]);
+        setIsSearchingUsers(false);
+        setSearchError("");
+        return;
+      }
+
+      let active = true;
+      const timeout = setTimeout(async () => {
+        setIsSearchingUsers(true);
+        setSearchError("");
+        try {
+          const response = await withFreshJWT(
+            (token) => axios.get(`/api/users/search?q=${encodeURIComponent(query)}`, { headers: { Authorization: `Bearer ${token}` } }),
+            () => router.replace("/login"),
+          );
+          if (active) setSearchResults(response.data.users);
+        } catch (searchError) {
+          if (active) {
+            setSearchResults([]);
+            setSearchError(searchError.response?.data?.error ?? "Could not search profiles. Please try again.");
+          }
+        } finally {
+          if (active) setIsSearchingUsers(false);
+        }
+      }, 300);
+
+      return () => {
+        active = false;
+        clearTimeout(timeout);
+      };
+    }, [searchMemberId, isAddMemberOpen, user, router]);
 
     useEffect(() => {
       if (!user || !boardId) return;
@@ -250,6 +294,33 @@ export default function Boardpage(){
       }
     }
 
+    async function handleAddMember(recipientId) {
+      if (!recipientId) return;
+
+      setIsAddingMember(true);
+      try {
+        await withFreshJWT(
+          (token) =>
+            axios.post(
+              "/api/invitations",
+              { boardId, recipientId },
+              { headers: { Authorization: `Bearer ${token}` } },
+            ),
+          () => router.replace("/login"),
+        );
+        setRequestedUserIds((ids) => ids.includes(recipientId) ? ids : [...ids, recipientId]);
+        toast.success("Invitation sent.");
+      } catch (error) {
+        toast.error(
+          axios.isAxiosError(error)
+            ? error.response?.data?.error ?? "Unable to add member."
+            : "Unable to add member.",
+        );
+      } finally {
+        setIsAddingMember(false);
+      }
+    }
+
     async function onDeleteColumn(columnId){
         try {
             const cardsinColumns = cardscoll.filter(
@@ -390,59 +461,129 @@ export default function Boardpage(){
             organize your tasks and keep your work moving
           </p>
 
-          <Sheet>
-            <SheetTrigger className="mt-5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-800">
-              Members
-            </SheetTrigger>
-            <SheetContent side="right">
-              <SheetHeader>
-                <SheetTitle>Board Members</SheetTitle>
-                <SheetDescription>
-                  Board members will appear here.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6 space-y-3">
-                {boarddata?.members?.map((memberId) => (
-                  <div
-                    key={memberId}
-                    className="flex justify-between rounded-lg border border-zinc-700 p-3"
-                  >
-                    {memberId}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger>...</DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/profile/${memberId}`)}
-                        >
-                          profile
-                        </DropdownMenuItem>
-                        {role === "owner" && memberId !== user.$id && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => setMemberToRemove(memberId)}
-                            >
-                              Remove Member
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                const selectedMemberIndex = boarddata.members.indexOf(memberId);
-                                const currentRole = boarddata.memberRoles?.[selectedMemberIndex] ?? "viewer";
+          <div className="mt-5 flex gap-3">
+            <Sheet>
+              <SheetTrigger className="mt-5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-800">
+                Members
+              </SheetTrigger>
+              <SheetContent side="right">
+                <SheetHeader>
+                  <SheetTitle>Board Members</SheetTitle>
+                  <SheetDescription>
+                    Board members will appear here.
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-3">
+                  {boarddata?.members?.map((memberId) => (
+                    <div
+                      key={memberId}
+                      className="flex justify-between rounded-lg border border-zinc-700 p-3"
+                    >
+                      {memberId}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>...</DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => router.push(`/profile/${memberId}`)}
+                          >
+                            profile
+                          </DropdownMenuItem>
+                          {role === "owner" && memberId !== user.$id && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => setMemberToRemove(memberId)}
+                              >
+                                Remove Member
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  const selectedMemberIndex =
+                                    boarddata.members.indexOf(memberId);
+                                  const currentRole =
+                                    boarddata.memberRoles?.[
+                                      selectedMemberIndex
+                                    ] ?? "viewer";
 
-                                setMemberToEdit({ id: memberId, currentRole });
-                                setSelectedRole(currentRole);
-                              }}
-                            >
-                              Change Role
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                                  setMemberToEdit({
+                                    id: memberId,
+                                    currentRole,
+                                  });
+                                  setSelectedRole(currentRole);
+                                }}
+                              >
+                                Change Role
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {role === "owner" && (
+              <Dialog
+                open={isAddMemberOpen}
+                onOpenChange={setIsAddMemberOpen}
+              >
+                <DialogTrigger className="rounded-lg bg-indigo-600 px-3 py-2">
+                  Add Members
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <div className="space-y-4">
+                    <DialogHeader>
+                      <DialogTitle>Find someone to invite</DialogTitle>
+                      <DialogDescription>
+                        Search by profile name. They can accept your request from their inbox.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                      <label htmlFor="member-user-search" className="text-sm font-medium">
+                        Name
+                      </label>
+                      <Input
+                        id="member-user-search"
+                        value={searchMemberId}
+                        onChange={(event) => setSearchMemberId(event.target.value)}
+                        placeholder="Search profiles"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="max-h-64 space-y-2 overflow-y-auto">
+                      {isSearchingUsers && <p className="py-3 text-sm text-zinc-400">Searching…</p>}
+                      {!isSearchingUsers && searchError && <p className="py-3 text-sm text-rose-300">{searchError}</p>}
+                      {!isSearchingUsers && !searchError && searchMemberId.trim().length >= 2 && searchResults.length === 0 && <p className="py-3 text-sm text-zinc-400">No profiles found.</p>}
+                      {searchResults.map((profile) => {
+                        const isMember = boarddata?.members?.includes(profile.userId);
+                        const requestSent = requestedUserIds.includes(profile.userId);
+                        return (
+                          <div key={profile.userId} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 p-3">
+                            <Link href={`/profile/${encodeURIComponent(profile.userId)}`} onClick={() => setIsAddMemberOpen(false)} className="min-w-0 flex-1 hover:text-indigo-300">
+                              <span className="block truncate font-medium">{profile.displayName}</span>
+                              {profile.bio && <span className="mt-0.5 block truncate text-xs text-zinc-400">{profile.bio}</span>}
+                            </Link>
+                            <Button type="button" disabled={isMember || requestSent || isAddingMember} onClick={() => void handleAddMember(profile.userId)} className="shrink-0 rounded-md bg-indigo-600 px-3 py-2 text-xs text-white">
+                              {isMember ? "Member" : requestSent ? "Request sent" : isAddingMember ? "Sending…" : "Add member"}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <DialogFooter>
+                      <DialogClose
+                        type="button"
+                        className="rounded-md border border-zinc-700 px-3 py-2 text-sm"
+                      >
+                        Cancel
+                      </DialogClose>
+                    </DialogFooter>
                   </div>
-                ))}
-              </div>
-            </SheetContent>
-          </Sheet>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
 
           <AlertDialog
             open={memberToRemove !== null}
@@ -454,7 +595,8 @@ export default function Boardpage(){
               <AlertDialogHeader>
                 <AlertDialogTitle>Remove this member?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  They will be unassigned from their cards and removed from this board.
+                  They will be unassigned from their cards and removed from this
+                  board.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

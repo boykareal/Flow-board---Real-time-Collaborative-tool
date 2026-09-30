@@ -18,7 +18,9 @@ Clone this repository to your local machine using Git:
    integrations as per your needs.
 3. **Install dependencies**<br/>
    Run `npm install` to install all dependencies.
-4. **Run the app**<br/>
+4. **Set up the Appwrite database**<br/>
+   Run `npm run setup:db` to create or update the collections and indexes, including board invitations and profile search.
+5. **Run the app**<br/>
    Start the project by running `npm run dev`.
 
 ## 💡 Additional notes

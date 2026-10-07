@@ -38,16 +38,19 @@ export const userAuthStore = create()(
                 }
             },
 
-            async recheckSession(){
+            async completeOAuthSession(userId, secret){
                 try {
-                    const user = await account.get();
-                    const { jwt } = await account.createJWT();
-                    set({user, jwt, authError: null, authChecked: true, authChecking: false});
+                    const session = await account.createSession(userId, secret);
+                    const [user, { jwt }] = await Promise.all([
+                        account.get(),
+                        account.createJWT(),
+                    ]);
+                    set({session, user, jwt, authError:null, authChecked:true, authChecking:false});
                     return { success: true };
                 } catch (error) {
-                    const message = error?.message || "No active Appwrite session.";
-                    set({session: null, jwt: null, user: null, authError: message, authChecked: true, authChecking: false});
-                    return { success: false, error: message };
+                    const message = error?.message || "Unable to create an Appwrite session.";
+                    set({session:null, jwt:null, user:null, authError:message, authChecked:true, authChecking:false});
+                    return { success:false, error:message };
                 }
             },
 

@@ -31,10 +31,12 @@ export default function OAuthButtons({ failurePath = "/login" }) {
     setError("");
     try {
       const origin = window.location.origin;
-      account.createOAuth2Session(
+      const state = window.crypto.randomUUID();
+      window.sessionStorage.setItem("flowboard-oauth-state", state);
+      account.createOAuth2Token(
         provider,
-        `${origin}/auth/callback`,
-        `${origin}/auth/callback?oauth=failed&returnTo=${encodeURIComponent(failurePath)}`,
+        `${origin}/auth/callback?state=${encodeURIComponent(state)}`,
+        `${origin}/auth/callback?oauth=failed&returnTo=${encodeURIComponent(failurePath)}&state=${encodeURIComponent(state)}`,
       );
     } catch {
       setError("Could not start sign in. Please try again.");

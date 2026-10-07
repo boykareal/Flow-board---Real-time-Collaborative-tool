@@ -10,11 +10,11 @@ export default function OAuthCallbackPage() {
   const hydrated = userAuthStore((state) => state.hydrated);
   const authChecked = userAuthStore((state) => state.authChecked);
   const user = userAuthStore((state) => state.user);
-  const recheckSession = userAuthStore((state) => state.recheckSession);
+  const completeOAuthSession = userAuthStore((state) => state.completeOAuthSession);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!hydrated || !authChecked) return;
+    if (!hydrated) return;
 
     if (user) {
       router.replace("/boards");
@@ -22,29 +22,48 @@ export default function OAuthCallbackPage() {
     }
 
     const query = new URLSearchParams(window.location.search);
+    const state = query.get("state");
+    const expectedState = window.sessionStorage.getItem("flowboard-oauth-state");
+    const validState = Boolean(state && expectedState && state === expectedState);
+    window.sessionStorage.removeItem("flowboard-oauth-state");
+
     if (query.get("oauth") === "failed") {
       const returnedFrom = query.get("returnTo");
       const returnPath = returnedFrom === "/signup" ? "sign up" : "login";
-      setErrorMessage(`Google or GitHub sign-in did not complete. Please check the provider settings and try again from ${returnPath}.`);
+      setErrorMessage(validState
+        ? `Google or GitHub sign-in did not complete. Please check the provider settings and try again from ${returnPath}.`
+        : "The sign-in request could not be verified. Please start again from login.");
       return;
     }
 
-    let active = true;
-    const retry = window.setTimeout(async () => {
-      const result = await recheckSession();
-      if (!active) return;
-      if (result.success) {
-        router.replace("/boards");
+    const userId = query.get("userId");
+    const secret = query.get("secret");
+    if (userId && secret) {
+      if (!validState) {
+        setErrorMessage("The sign-in request could not be verified. Please start again from login.");
         return;
       }
-      setErrorMessage(`Appwrite did not establish a session after sign-in: ${result.error}`);
-    }, 500);
 
-    return () => {
-      active = false;
-      window.clearTimeout(retry);
-    };
-  }, [hydrated, authChecked, user, recheckSession, router]);
+      // The OAuth token secret is single-use. Remove it from the address bar
+      // before exchanging it for an Appwrite session.
+      window.history.replaceState({}, "", "/auth/callback");
+      let active = true;
+      void completeOAuthSession(userId, secret).then((result) => {
+        if (!active) return;
+        if (result.success) {
+          router.replace("/boards");
+        } else {
+          setErrorMessage(`Appwrite could not create a session: ${result.error}`);
+        }
+      });
+
+      return () => { active = false; };
+    }
+
+    if (authChecked) {
+      setErrorMessage("The OAuth provider returned without a session token. Please try again.");
+    }
+  }, [hydrated, authChecked, user, completeOAuthSession, router]);
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-zinc-950 px-4 py-10 text-zinc-100">

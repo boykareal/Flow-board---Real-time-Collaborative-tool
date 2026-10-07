@@ -79,12 +79,12 @@ export default function createpage(){
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-        <Card className="w-full max-w-md border border-slate-700 bg-slate-900 text-white shadow-2xl">
+      <main className="flex min-h-[calc(100svh-4rem)] items-center justify-center bg-zinc-950 px-4 py-10">
+        <Card className="w-full max-w-md border border-zinc-800 bg-zinc-900 text-zinc-100 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-white">Create board</CardTitle>
+            <CardTitle>Create board</CardTitle>
 
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-zinc-400">
               Create a board to organize your work.
             </CardDescription>
           </CardHeader>
@@ -92,7 +92,7 @@ export default function createpage(){
           <form onSubmit={handlesubmit}>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-200">
+                <Label htmlFor="title" className="text-zinc-200">
                   Title
                 </Label>
 
@@ -100,12 +100,12 @@ export default function createpage(){
                   id="title"
                   name="title"
                   placeholder="Enter board title"
-                  className="border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
+                  className="border-zinc-700 bg-zinc-950 text-zinc-100 placeholder:text-zinc-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-slate-200">
+                <Label htmlFor="description" className="text-zinc-200">
                   Description
                 </Label>
 
@@ -113,12 +113,12 @@ export default function createpage(){
                   id="description"
                   name="description"
                   placeholder="Enter board description (optional)"
-                  className="border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
+                  className="border-zinc-700 bg-zinc-950 text-zinc-100 placeholder:text-zinc-500"
                 />
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="color" className="text-slate-200">
+                <Label htmlFor="color" className="text-zinc-200">
                   Board color
                 </Label>
 
@@ -127,7 +127,7 @@ export default function createpage(){
                   name="color"
                   type="color"
                   defaultValue="#3b82f6"
-                  className="h-10 w-16 cursor-pointer border-slate-700 bg-slate-800 p-1"
+                  className="h-10 w-16 cursor-pointer border-zinc-700 bg-zinc-950 p-1"
                 />
               </div>
             </CardContent>
@@ -135,13 +135,13 @@ export default function createpage(){
             <CardFooter className="mt-2 border-0 bg-transparent px-4 pb-4">
               <Button
                 type="submit"
-                className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                className="w-full bg-indigo-600 text-white hover:bg-indigo-500"
               >
                 Create Board
               </Button>
             </CardFooter>
           </form>
         </Card>
-      </div>
+      </main>
     );
 }

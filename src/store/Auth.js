@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { persist } from "zustand/middleware";
 
-import { AppwriteException, ID, Models } from "appwrite";
+import { ID } from "appwrite";
 import { account } from "@/lib/client/config";
 
 export const userAuthStore = create()(
@@ -107,11 +107,19 @@ export const userAuthStore = create()(
                 try {
                     await account.deleteSession("current")
                     set({session: null, jwt: null, user:null, authChecked: true, authChecking: false})
+                    return { success: true };
                 } catch (error) {
-                    console.error(error);
+                    // Expired sessions are already logged out from Appwrite's
+                    // perspective; clear the local auth state in that case.
+                    if (error?.code === 401 || error?.code === 404) {
+                        set({session: null, jwt: null, user:null, authChecked: true, authChecking: false})
+                        return { success: true };
+                    }
                     return {
                         success:false,
-                        error: error instanceof AppwriteException ? error : new Error("Something went wrong while logging out user")
+                        error: typeof error?.message === "string" && error.message.trim()
+                            ? error.message
+                            : "Unable to log out. Please try again."
                     }
                 }
             },

@@ -64,6 +64,7 @@ function Column({ title, cards, columnId, boardId, setCardsData, onrename , onDe
   const [selectedcard, setselectedcard] = useState(null);
   const [Editing, setEditing] = useState(false);
   const [isRenameOpen, setisRenameOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const [isAddcardOpen, setisAddcardOpen] = useState(false);
   const [draftCard, setDraftCard] = useState(null);
   const [error,seterror] = useState(null);
@@ -222,11 +223,21 @@ async function handleDeleteCard() {
           <DialogHeader>
             <DialogTitle>Rename Column</DialogTitle>
           </DialogHeader>
-          <form onSubmit={onrename}>
-            <div>
-              <label htmlFor="newtitle">newTitle</label>
+          <form
+            onSubmit={async (event) => {
+              setIsRenaming(true);
+              try {
+                if (await onrename(event)) setisRenameOpen(false);
+              } finally {
+                setIsRenaming(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <label htmlFor="newtitle" className="text-sm font-medium text-zinc-200">Column name</label>
               <input
-                className="text-black"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                 id="newtitle"
                 name="newtitle"
                 placeholder="Enter New Title"
@@ -235,8 +246,8 @@ async function handleDeleteCard() {
                 minLength={5}
               ></input>
             </div>
-            <Button type="submit">Rename column</Button>
-            <Button type="button" onClick={() => setisRenameOpen(false)}>
+            <Button type="submit" disabled={isRenaming} className="bg-indigo-600 text-white hover:bg-indigo-500">{isRenaming ? "Saving…" : "Rename column"}</Button>
+            <Button type="button" variant="outline" disabled={isRenaming} onClick={() => setisRenameOpen(false)}>
               Cancel
             </Button>
           </form>
@@ -422,11 +433,11 @@ async function handleDeleteCard() {
             <DialogTitle>Create Card</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit}>
-            <div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <input
-                className="text-black"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                 id="title"
                 name="title"
                 placeholder="Title"
@@ -435,10 +446,10 @@ async function handleDeleteCard() {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <input
-                className="text-black"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                 id="description"
                 name="description"
                 placeholder="Description (optional)"
@@ -446,20 +457,20 @@ async function handleDeleteCard() {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="dueDate">Due date</Label>
               <input
-                className="text-black"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                 id="dueDate"
                 name="dueDate"
                 type="date"
               />
             </div>
 
-            <div>
-              <Label htmlFor="assigneeId">assigneeId</Label>
+            <div className="space-y-2">
+              <Label htmlFor="assigneeId">Assignee ID</Label>
               <input
-                className="text-black"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                 id="assigneeId"
                 name="assigneeId"
                 placeholder="Enter Id"

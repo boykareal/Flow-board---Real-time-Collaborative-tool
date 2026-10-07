@@ -24,7 +24,7 @@ export default function ProfilePage() {
     });
   }, [user, userId]);
 
-  if (!profile) return <main className="mx-auto max-w-2xl p-8 text-zinc-400">Loading profile…</main>;
+  if (!profile) return <main className="mx-auto min-h-[calc(100svh-4rem)] max-w-2xl px-4 py-8 text-zinc-400 sm:px-6">Loading profile…</main>;
 
   async function copyUserId() {
     try {
@@ -37,7 +37,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="mx-auto mt-10 max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-zinc-100 shadow-xl">
+    <main className="mx-auto my-6 w-[calc(100%-2rem)] max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-100 shadow-xl sm:my-10 sm:w-[calc(100%-3rem)] sm:p-8">
       <div className="flex size-16 items-center justify-center rounded-full bg-indigo-600 text-2xl font-semibold">
         {profile.displayName?.charAt(0)?.toUpperCase() ?? "U"}
       </div>

@@ -245,7 +245,7 @@ export default function Boardpage(){
       }
     }
 
-    const handlerenameColumn = async(e) => {
+    const handlerenameColumn = async(e, columnId) => {
         try {
             e.preventDefault();
 
@@ -253,25 +253,29 @@ export default function Boardpage(){
             const newColumntitle = formdata.get("newtitle");
 
             if(typeof newColumntitle !== "string" || newColumntitle.trim().length < 5){
-                return;
+                toast.error("Column name must contain at least 5 characters.");
+                return false;
             }
 
             const newtitle = newColumntitle.trim();
-            
-            await databases.updateDocument(
-                db,
-                columnsId,
-                columnId,
-                {
-                    title: newtitle
-                }
+
+            const response = await withFreshJWT(
+              (token) => axios.patch(`/api/columns/${encodeURIComponent(columnId)}`, { title: newtitle }, {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+              () => router.replace("/login"),
             );
             
-            setcolumns((prevcolumns) => prevcolumns.map((column) => column.$id === columnId ? {...column, title: newtitle}: column))
-            
-            setisRenameOpen(false);
+            setcolumns((prevcolumns) => prevcolumns.map((column) => column.$id === columnId ? response.data : column));
+            toast.success("Column renamed.");
+            return true;
         } catch (error) {
-            console.error("could not rename Column", error);
+            toast.error(
+              axios.isAxiosError(error)
+                ? error.response?.data?.error ?? "Unable to rename column. Please try again."
+                : "Unable to rename column. Please try again.",
+            );
+            return false;
         }
     }
 
@@ -512,7 +516,7 @@ export default function Boardpage(){
 
           <div className="mt-5 flex gap-3">
             <Sheet>
-              <SheetTrigger className="mt-5 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-800">
+              <SheetTrigger className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
                 Members
               </SheetTrigger>
               <SheetContent side="right">
@@ -781,7 +785,7 @@ export default function Boardpage(){
                   )}
                   boardId={boardId}
                   setCardsData={setcardsdata}
-                  onrename={handlerenameColumn}
+                  onrename={(event) => handlerenameColumn(event, column.$id)}
                   onDelete={onDeleteColumn}
                   canEdit={canEdit}
                 />

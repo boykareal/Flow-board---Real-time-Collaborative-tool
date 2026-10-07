@@ -5,13 +5,13 @@ import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import InvitationInbox from "@/components/InvitationInbox";
 
 export const metadata = {
-  title: "Appwrite + Next.js",
-  description: "Appwrite starter for Next.js",
+  title: "FlowBoard | Collaborative workspaces",
+  description: "Organize work together with FlowBoard.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <link rel="icon" href="/appwrite.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
         />
         <link rel="icon" type="image/svg+xml" href="/appwrite.svg" />
       </head>
-      <body className={"bg-[#FAFAFB] font-[Inter] text-sm text-[#56565C]"}>
+      <body className="bg-background font-[Inter] text-sm text-foreground">
         <AuthBootstrap />
         <AuthenticatedHeader />
         {children}

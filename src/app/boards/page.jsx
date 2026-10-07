@@ -42,50 +42,51 @@ export default function dashboardPage(){
     }
 
     return (
-      <div className="min-h-screen bg-slate-950 p-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="min-h-[calc(100svh-4rem)] bg-zinc-950 px-4 py-6 text-zinc-100 sm:px-6 sm:py-8 lg:px-8">
+       <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Your Boards</h1>
-            <p className="text-slate-400">Manage and organize your projects.</p>
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">Your Boards</h1>
+            <p className="text-zinc-400">Manage and organize your projects.</p>
           </div>
 
           <Button
             onClick={() => router.push("/boards/create")}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            className="w-full bg-indigo-600 text-white hover:bg-indigo-500 sm:w-auto"
           >
             + Create Board
           </Button>
         </div>
 
         {boards.length === 0 ? (
-          <div className="rounded-lg border border-slate-700 bg-slate-900 p-8 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center sm:p-8">
             <h2 className="text-xl font-semibold text-white">
               No boards created yet
             </h2>
 
-            <p className="mt-2 text-slate-400">
+            <p className="mt-2 text-zinc-400">
               Create your first board to get started.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {boards.map((board) => (
               <Link
                 key={board.$id}
                 href={`/boards/${board.$id}`}
                 className="block"
               >
-                <Card className="h-full cursor-pointer border-slate-700 bg-slate-900 text-white transition hover:border-blue-500 hover:shadow-lg">
+                <Card className="h-full cursor-pointer border-zinc-800 bg-zinc-900 text-zinc-100 transition hover:border-indigo-500/70 hover:shadow-lg hover:shadow-indigo-950/30">
                   <CardHeader>
                     <CardTitle>{board.title}</CardTitle>
 
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-zinc-400">
                       {board.description}
                     </CardDescription>
                   </CardHeader>
 
                   <CardContent>
-                    <p className="text-slate-400">
+                    <p className="text-zinc-400">
                       {board.members?.length ?? 0} members
                     </p>
                   </CardContent>
@@ -94,6 +95,7 @@ export default function dashboardPage(){
             ))}
           </div>
         )}
-      </div>
+       </div>
+      </main>
     );
 }

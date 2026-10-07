@@ -33,8 +33,8 @@ export default function OAuthButtons({ failurePath = "/login" }) {
       const origin = window.location.origin;
       account.createOAuth2Session(
         provider,
-        `${origin}/boards`,
-        `${origin}${failurePath}`,
+        `${origin}/auth/callback`,
+        `${origin}/auth/callback?oauth=failed&returnTo=${encodeURIComponent(failurePath)}`,
       );
     } catch {
       setError("Could not start sign in. Please try again.");

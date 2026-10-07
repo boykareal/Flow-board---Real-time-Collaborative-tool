@@ -10,6 +10,7 @@ export default function OAuthCallbackPage() {
   const hydrated = userAuthStore((state) => state.hydrated);
   const authChecked = userAuthStore((state) => state.authChecked);
   const user = userAuthStore((state) => state.user);
+  const recheckSession = userAuthStore((state) => state.recheckSession);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -21,14 +22,29 @@ export default function OAuthCallbackPage() {
     }
 
     const query = new URLSearchParams(window.location.search);
-    const returnedFrom = query.get("returnTo");
-    const returnPath = returnedFrom === "/signup" ? "sign up" : "login";
-    setErrorMessage(
-      query.get("oauth") === "failed"
-        ? `Google or GitHub sign-in did not complete. Please check the provider settings and try again from ${returnPath}.`
-        : "No active session was found after sign-in. Please try again.",
-    );
-  }, [hydrated, authChecked, user, router]);
+    if (query.get("oauth") === "failed") {
+      const returnedFrom = query.get("returnTo");
+      const returnPath = returnedFrom === "/signup" ? "sign up" : "login";
+      setErrorMessage(`Google or GitHub sign-in did not complete. Please check the provider settings and try again from ${returnPath}.`);
+      return;
+    }
+
+    let active = true;
+    const retry = window.setTimeout(async () => {
+      const result = await recheckSession();
+      if (!active) return;
+      if (result.success) {
+        router.replace("/boards");
+        return;
+      }
+      setErrorMessage(`Appwrite did not establish a session after sign-in: ${result.error}`);
+    }, 500);
+
+    return () => {
+      active = false;
+      window.clearTimeout(retry);
+    };
+  }, [hydrated, authChecked, user, recheckSession, router]);
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-zinc-950 px-4 py-10 text-zinc-100">

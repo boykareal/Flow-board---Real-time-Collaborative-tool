@@ -14,6 +14,7 @@ export const userAuthStore = create()(
             hydrated: false,
             authChecked: false,
             authChecking: false,
+            authError: null,
 
             setHydrated(){
                 set({hydrated: true})
@@ -29,11 +30,24 @@ export const userAuthStore = create()(
                 try {
                     const user = await account.get();
                     const { jwt } = await account.createJWT();
-                    set({user,jwt});
-                } catch {
-                    set({session: null, jwt: null, user: null});
+                    set({user,jwt,authError:null});
+                } catch (error) {
+                    set({session: null, jwt: null, user: null, authError: error?.message || "No active Appwrite session."});
                 } finally {
                     set({authChecked: true, authChecking: false});
+                }
+            },
+
+            async recheckSession(){
+                try {
+                    const user = await account.get();
+                    const { jwt } = await account.createJWT();
+                    set({user, jwt, authError: null, authChecked: true, authChecking: false});
+                    return { success: true };
+                } catch (error) {
+                    const message = error?.message || "No active Appwrite session.";
+                    set({session: null, jwt: null, user: null, authError: message, authChecked: true, authChecking: false});
+                    return { success: false, error: message };
                 }
             },
 

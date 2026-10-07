@@ -67,7 +67,8 @@ export default function Boardpage(){
       }),
     );
 
-    const memberIndex = boarddata?.members?.indexOf(user.$id) ?? -1;
+    const currentUserId = user?.$id;
+    const memberIndex = currentUserId ? (boarddata?.members?.indexOf(currentUserId) ?? -1) : -1;
     const role = memberIndex >= 0 ? boarddata?.memberRoles?.[memberIndex] : null;
     const canEdit = role === "owner" || role === "editor";
     const [memberEdit, setMemberToEdit] = useState(null);
@@ -79,6 +80,34 @@ export default function Boardpage(){
     const [isSearchingUsers, setIsSearchingUsers] = useState(false);
     const [searchError, setSearchError] = useState("");
     const [requestedUserIds, setRequestedUserIds] = useState([]);
+    const [memberProfiles, setMemberProfiles] = useState({});
+
+    useEffect(() => {
+      if (!user || !boarddata?.members?.length) {
+        setMemberProfiles({});
+        return;
+      }
+
+      let active = true;
+      const loadMemberProfiles = async () => {
+        const profiles = await Promise.all(boarddata.members.map(async (memberId) => {
+          try {
+            const response = await withFreshJWT(
+              (token) => axios.get(`/api/profile/${encodeURIComponent(memberId)}`, { headers: { Authorization: `Bearer ${token}` } }),
+              () => router.replace("/login"),
+            );
+            return [memberId, response.data.displayName || "FlowBoard user"];
+          } catch {
+            return [memberId, "FlowBoard user"];
+          }
+        }));
+
+        if (active) setMemberProfiles(Object.fromEntries(profiles));
+      };
+
+      void loadMemberProfiles();
+      return () => { active = false; };
+    }, [boarddata?.members, user, router]);
 
     useEffect(() => {
       const query = searchMemberId.trim();
@@ -499,7 +528,7 @@ export default function Boardpage(){
                       key={memberId}
                       className="flex justify-between rounded-lg border border-zinc-700 p-3"
                     >
-                      {memberId}
+                      {memberProfiles[memberId] || "Loading name…"}
                       <DropdownMenu>
                         <DropdownMenuTrigger>...</DropdownMenuTrigger>
                         <DropdownMenuContent>
@@ -508,7 +537,7 @@ export default function Boardpage(){
                           >
                             profile
                           </DropdownMenuItem>
-                          {role === "owner" && memberId !== user.$id && (
+                          {role === "owner" && memberId !== currentUserId && (
                             <>
                               <DropdownMenuItem
                                 onClick={() => setMemberToRemove(memberId)}
@@ -647,7 +676,7 @@ export default function Boardpage(){
               <DialogHeader>
                 <DialogTitle>Change member role</DialogTitle>
                 <DialogDescription>
-                  Choose the role for member {memberEdit?.id}.
+                  Choose the role for member {memberProfiles[memberEdit?.id] || "this board member"}.
                 </DialogDescription>
               </DialogHeader>
 

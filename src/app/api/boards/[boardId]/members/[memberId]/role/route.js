@@ -47,9 +47,15 @@ export async function PATCH(request, { params }) {
     const serverDatabases = new Databases(serverClient);
     const board = await serverDatabases.getDocument(db, boardsId, boardId);
     const members = Array.isArray(board.members) ? board.members : [];
-    const memberRoles = Array.isArray(board.memberRoles)
-      ? board.memberRoles
-      : [];
+    // Rebuild missing or out-of-sync roles from the member list so each role
+    // remains aligned with the corresponding member ID.
+    const memberRoles = members.map((id, index) =>
+      typeof board.memberRoles?.[index] === "string"
+        ? board.memberRoles[index]
+        : id === board.ownerId
+          ? "owner"
+          : "viewer",
+    );
 
     const requesterIndex = members.indexOf(user.$id);
     const targetIndex = members.indexOf(memberId);
@@ -95,11 +101,14 @@ export async function PATCH(request, { params }) {
 
     updatedRoles[targetIndex] = role;
 
+    const update = { memberRoles: updatedRoles };
+    if (role === "owner") update.ownerId = memberId;
+
     const updatedBoard = await serverDatabases.updateDocument(
       db,
       boardsId,
       boardId,
-      { memberRoles: updatedRoles },
+      update,
     );
 
     return NextResponse.json({

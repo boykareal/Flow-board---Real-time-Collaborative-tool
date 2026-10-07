@@ -1,11 +1,12 @@
 {
-  "name": "starter-for-nextjs",
+  "name": "flowboard",
   "version": "0.1.0",
+  "description": "A real-time collaborative Kanban workspace built with Next.js and Appwrite.",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "setup:db": "node --env-file=.env src/models/dbsetup.js",
+    "setup:db": "node --env-file=.env.local src/models/dbsetup.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
